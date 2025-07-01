@@ -5,6 +5,13 @@ import { Product, ApiResponse, PaginatedResponse } from '@/lib/types'
 export async function GET(request: NextRequest) {
   try {
     // Handle build-time static generation
+    if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
+      return NextResponse.json({
+        data: [],
+        pagination: { page: 1, limit: 12, total: 0, pages: 0 }
+      })
+    }
+
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({
         data: [],
@@ -12,7 +19,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const { searchParams } = new URL(request.url)
+    const { searchParams } = request.nextUrl
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const category = searchParams.get('category')

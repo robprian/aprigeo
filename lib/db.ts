@@ -6,11 +6,23 @@ let pool: Pool | null = null
 
 // Function to initialize database connection at runtime
 export function initializeDatabase() {
+  // Skip database initialization during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
+    return null
+  }
+  
   if (!pool && process.env.DATABASE_URL) {
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    })
+    try {
+      pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 10000,
+      })
+    } catch (error) {
+      console.warn('Database initialization failed:', error)
+      return null
+    }
   }
   return pool
 }
@@ -20,12 +32,18 @@ let redis: Redis | null = null
 
 // Function to initialize Redis connection at runtime
 export function initializeRedis() {
+  // Skip Redis initialization during build time
+  if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
+    return null
+  }
+  
   if (!redis && (process.env.REDIS_URL || process.env.NODE_ENV === 'development')) {
     try {
       redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
         retryDelayOnFailover: 100,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
+        connectTimeout: 5000,
       })
     } catch (error) {
       console.warn('Redis connection failed:', error)
