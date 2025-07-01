@@ -1,0 +1,76 @@
+services:
+  apriniageosat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.apriniageosat.rule=Host(`apriniageosat.co.id`)"
+      - "traefik.http.routers.apriniageosat.entrypoints=web"
+      - "traefik.http.services.apriniageosat.loadbalancer.server.port=8000"
+      # Redirect HTTP to HTTPS
+      - "traefik.http.routers.apriniageosat-secure.rule=Host(`apriniageosat.co.id`)"
+      - "traefik.http.routers.apriniageosat-secure.entrypoints=websecure"
+      - "traefik.http.routers.apriniageosat-secure.tls=true"
+      - "traefik.http.routers.apriniageosat-secure.tls.certresolver=letsencrypt"
+      # Middleware for HTTPS redirect
+      - "traefik.http.middlewares.apriniageosat-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.apriniageosat.middlewares=apriniageosat-redirect"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:GtcCg1mKmrmEfgJLwSqQNlnESslWmEySQWrNHAmAis@apriniageosat-postgres:5432/geosatsolusindo}
+      - POSTGRES_DB=${POSTGRES_DB:-geosatsolusindo}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-GtcCg1mKmrmEfgJLwSqQNlnESslWmEySQWrNHAmAis}
+      - REDIS_URL=${REDIS_URL:-redis://apriniageosat-redis:6379}
+      - NEXT_PUBLIC_MEILISEARCH_HOST=${NEXT_PUBLIC_MEILISEARCH_HOST:-http://apriniageosat-meilisearch:7700}
+      - NEXT_PUBLIC_MEILISEARCH_API_KEY=${NEXT_PUBLIC_MEILISEARCH_API_KEY:-GtcCg1mKmrmEfgJLwSqQN+lnESslWmEySQWrNHAmAis}
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-GtcCg1mKmrmEfgJLwSqQN+lnESslWmEySQWrNHAmAis}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-DkM0Yfqiqb/splFsII6k3ggH884sWKkFuSfhR2oUNzs}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://apriniageosat.co.id}
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+    depends_on:
+      - apriniageosat-postgres
+      - apriniageosat-redis
+      - apriniageosat-meilisearch
+    networks:
+      - traefik
+      - default
+
+  apriniageosat-postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-geosatsolusindo}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-GtcCg1mKmrmEfgJLwSqQNlnESslWmEySQWrNHAmAis}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  apriniageosat-redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  apriniageosat-meilisearch:
+    image: getmeili/meilisearch:v1.5
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-GtcCg1mKmrmEfgJLwSqQN+lnESslWmEySQWrNHAmAis}
+      - MEILI_ENV=production
+    volumes:
+      - meilisearch_data:/meili_data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  meilisearch_data:
+
+networks:
+  traefik:
+    external: true

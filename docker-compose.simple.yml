@@ -1,0 +1,81 @@
+services:
+  apriniageosat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=${PORT:-8000}
+      - DATABASE_URL=${DATABASE_URL}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - REDIS_URL=${REDIS_URL}
+      - NEXT_PUBLIC_MEILISEARCH_HOST=${NEXT_PUBLIC_MEILISEARCH_HOST}
+      - NEXT_PUBLIC_MEILISEARCH_API_KEY=${NEXT_PUBLIC_MEILISEARCH_API_KEY}
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - FORCE_HTTPS=${FORCE_HTTPS:-true}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - NEXT_TELEMETRY_DISABLED=${NEXT_TELEMETRY_DISABLED:-1}
+    depends_on:
+      - apriniageosat-postgres
+      - apriniageosat-redis
+      - apriniageosat-meilisearch
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  apriniageosat-postgres:
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  apriniageosat-redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  apriniageosat-meilisearch:
+    image: getmeili/meilisearch:v1.5
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY}
+      - MEILI_ENV=production
+      - MEILI_HTTP_ADDR=0.0.0.0:7700
+    volumes:
+      - meilisearch_data:/meili_data
+    restart: unless-stopped
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  meilisearch_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

@@ -1,0 +1,49 @@
+services:
+  apriniageosat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - NODE_ENV=production
+      - PORT=8000
+      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:GtcCg1mKmrmEfgJLwSqQNlnESslWmEySQWrNHAmAis@apriniageosat-postgres:5432/geosatsolusindo}
+      - REDIS_URL=${REDIS_URL:-redis://apriniageosat-redis:6379}
+      - NEXT_PUBLIC_MEILISEARCH_HOST=${NEXT_PUBLIC_MEILISEARCH_HOST:-http://apriniageosat-meilisearch:7700}
+      - NEXT_PUBLIC_MEILISEARCH_API_KEY=${NEXT_PUBLIC_MEILISEARCH_API_KEY:-GtcCg1mKmrmEfgJLwSqQN+lnESslWmEySQWrNHAmAis}
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-GtcCg1mKmrmEfgJLwSqQN+lnESslWmEySQWrNHAmAis}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-DkM0Yfqiqb/splFsII6k3ggH884sWKkFuSfhR2oUNzs}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-https://apriniageosat.co.id}
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+
+  apriniageosat-postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-geosatsolusindo}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-GtcCg1mKmrmEfgJLwSqQNlnESslWmEySQWrNHAmAis}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  apriniageosat-redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+  apriniageosat-meilisearch:
+    image: getmeili/meilisearch:v1.5
+    environment:
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-GtcCg1mKmrmEfgJLwSqQN+lnESslWmEySQWrNHAmAis}
+      - MEILI_ENV=production
+    volumes:
+      - meilisearch_data:/meili_data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  meilisearch_data:
