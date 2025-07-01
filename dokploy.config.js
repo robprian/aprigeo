@@ -21,7 +21,7 @@ module.exports = {
           NEXTAUTH_SECRET: '${NEXTAUTH_SECRET}',
           NEXTAUTH_URL: '${NEXTAUTH_URL}'
         },
-        ports: ['3000:3000'],
+        ports: ['8000:8000'],
         depends_on: ['postgres', 'redis', 'meilisearch']
       },
       postgres: {
@@ -78,7 +78,7 @@ module.exports = {
     
     // NextAuth
     NEXTAUTH_SECRET: 'your-secret-key-here',
-    NEXTAUTH_URL: 'http://localhost:3000'
+    NEXTAUTH_URL: 'http://localhost:8000'
   },
   
   // Health checks

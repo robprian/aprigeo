@@ -27,7 +27,7 @@ services:
         - host: your-domain.com
       ports:
         - published: 80
-          target: 3000
+          target: 8000
       mounts: []
       
   - type: app

@@ -31,7 +31,7 @@ fi
 
 # Test the container locally
 echo "🧪 Testing container locally..."
-docker run -d --name gps-test -p 3001:3000 gps-survey-store:latest
+docker run -d --name gps-test -p 8001:8000 gps-survey-store:latest
 
 # Wait for container to start
 sleep 10
@@ -41,7 +41,7 @@ if docker ps | grep -q gps-test; then
     echo "✅ Container is running successfully"
     
     # Test if the application responds
-    if curl -f http://localhost:3001 > /dev/null 2>&1; then
+    if curl -f http://localhost:8001 > /dev/null 2>&1; then
         echo "✅ Application is responding"
     else
         echo "⚠️  Application might not be fully ready yet"
