@@ -12,7 +12,7 @@ import PageTransition from "@/components/ui/page-transition"
 import { jsPDF } from "jspdf"
 
 export default function OrdersPage() {
-  const { orders } = useStore()
+  const { orders = [] } = useStore()
 
   const getStatusColor = (status: string) => {
     switch (status) {

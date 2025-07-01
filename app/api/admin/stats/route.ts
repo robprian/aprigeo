@@ -4,6 +4,17 @@ import { DashboardStats } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
   try {
+    // Handle build-time static generation
+    if (!process.env.DATABASE_URL) {
+      const mockStats: DashboardStats = {
+        total_sales: { value: 0, change: 0, trend: 'up' },
+        total_orders: { value: 0, change: 0, trend: 'up' },
+        visitors: { value: 0, change: 0, trend: 'up' },
+        total_products_sold: { value: 0, change: 0, trend: 'up' }
+      }
+      return NextResponse.json({ success: true, data: mockStats })
+    }
+
     const cacheKey = 'admin:dashboard:stats'
     
     // Try to get from cache first

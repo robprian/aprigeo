@@ -3,6 +3,18 @@ import { query } from '@/lib/db'
 
 export async function GET() {
   try {
+    // Handle build-time static generation
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        services: {
+          database: 'not_configured',
+          application: 'running'
+        }
+      })
+    }
+
     // Check database connection
     await query('SELECT 1')
     

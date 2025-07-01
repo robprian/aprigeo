@@ -83,12 +83,24 @@ interface BlogPost {
   meta_tags?: string[]
 }
 
+interface Order {
+  id: number
+  customer: string
+  email: string
+  total: number
+  status: "Pending" | "Processing" | "Shipped" | "Delivered"
+  paymentStatus: "Pending" | "Paid" | "Failed"
+  date: string
+  items: number
+}
+
 interface StoreState {
   products: Product[]
   categories: Category[]
   brands: Brand[]
   banners: Banner[]
   blogPosts: BlogPost[]
+  orders: Order[]
 
   // Product actions
   addProduct: (product: Omit<Product, "id">) => void
@@ -115,6 +127,11 @@ interface StoreState {
   addBlogPost: (post: Omit<BlogPost, "id">) => void
   updateBlogPost: (id: number, updates: Partial<BlogPost>) => void
   deleteBlogPost: (id: number) => void
+
+  // Order actions
+  addOrder: (order: Omit<Order, "id">) => void
+  updateOrder: (id: number, updates: Partial<Order>) => void
+  deleteOrder: (id: number) => void
 
   // SEO generation
   generateSEO: (
@@ -357,6 +374,49 @@ const initialBlogPosts: BlogPost[] = [
   },
 ]
 
+const initialOrders: Order[] = [
+  {
+    id: 1,
+    customer: "John Doe",
+    email: "john.doe@example.com",
+    total: 239988000,
+    status: "Delivered",
+    paymentStatus: "Paid",
+    date: "2024-06-15",
+    items: 2,
+  },
+  {
+    id: 2,
+    customer: "Jane Smith",
+    email: "jane.smith@example.com",
+    total: 434982000,
+    status: "Shipped",
+    paymentStatus: "Paid",
+    date: "2024-06-20",
+    items: 1,
+  },
+  {
+    id: 3,
+    customer: "Bob Johnson",
+    email: "bob.johnson@example.com",
+    total: 494970000,
+    status: "Processing",
+    paymentStatus: "Paid",
+    date: "2024-06-25",
+    items: 3,
+  },
+  {
+    id: 4,
+    customer: "Alice Brown",
+    email: "alice.brown@example.com",
+    total: 19498800,
+    status: "Pending",
+    paymentStatus: "Pending",
+    date: "2024-06-28",
+    items: 1,
+  },
+]
+
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
@@ -365,6 +425,7 @@ export const useStore = create<StoreState>()(
       brands: initialBrands,
       banners: initialBanners,
       blogPosts: initialBlogPosts,
+      orders: initialOrders,
 
       // Product actions
       addProduct: (product) =>
@@ -449,6 +510,22 @@ export const useStore = create<StoreState>()(
       deleteBlogPost: (id) =>
         set((state) => ({
           blogPosts: state.blogPosts.filter((p) => p.id !== id),
+        })),
+
+      // Order actions
+      addOrder: (order) =>
+        set((state) => ({
+          orders: [...state.orders, { ...order, id: Date.now() }],
+        })),
+
+      updateOrder: (id, updates) =>
+        set((state) => ({
+          orders: state.orders.map((o) => (o.id === id ? { ...o, ...updates } : o)),
+        })),
+
+      deleteOrder: (id) =>
+        set((state) => ({
+          orders: state.orders.filter((o) => o.id !== id),
         })),
 
       // SEO generation

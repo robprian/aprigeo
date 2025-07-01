@@ -4,6 +4,11 @@ import { Category } from '@/lib/types'
 
 export async function GET(request: NextRequest) {
   try {
+    // Handle build-time static generation
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ success: true, data: [] })
+    }
+
     const { searchParams } = new URL(request.url)
     const includeCount = searchParams.get('include_count') === 'true'
     
