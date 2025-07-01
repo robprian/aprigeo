@@ -1,0 +1,54 @@
+name: gps-survey-store
+services:
+  - type: app
+    data:
+      projectName: gps-survey-store
+      serviceName: web
+      env:
+        - key: NODE_ENV
+          value: production
+        - key: NEXT_PUBLIC_MEILISEARCH_HOST
+          value: http://meilisearch:7700
+        - key: NEXT_PUBLIC_MEILISEARCH_API_KEY
+          value: masterKey
+        - key: NEXT_TELEMETRY_DISABLED
+          value: "1"
+      source:
+        type: github
+        repo: your-username/gps-survey-store
+        branch: main
+      build:
+        type: dockerfile
+        dockerfile: Dockerfile
+      deploy:
+        replicas: 1
+        strategy: recreate
+      domains:
+        - host: your-domain.com
+      ports:
+        - published: 80
+          target: 3000
+      mounts: []
+      
+  - type: app
+    data:
+      projectName: gps-survey-store
+      serviceName: meilisearch
+      env:
+        - key: MEILI_MASTER_KEY
+          value: masterKey
+        - key: MEILI_ENV
+          value: production
+      source:
+        type: image
+        image: getmeili/meilisearch:v1.5
+      deploy:
+        replicas: 1
+        strategy: recreate
+      ports:
+        - published: 7700
+          target: 7700
+      mounts:
+        - type: volume
+          name: meilisearch-data
+          mountPath: /meili_data
