@@ -6,6 +6,12 @@ services:
       target: runner
     ports:
       - "8000:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.apriniageosat.rule=Host(`apriniageosat.co.id`)"
+      - "traefik.http.routers.apriniageosat.entrypoints=websecure"
+      - "traefik.http.routers.apriniageosat.tls.certresolver=letsencrypt"
+      - "traefik.http.services.apriniageosat.loadbalancer.server.port=8000"
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}

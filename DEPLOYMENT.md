@@ -1,10 +1,12 @@
 # Deployment Guide untuk GPS Survey Store
+## Domain: apriniageosat.co.id
 
 ## Prasyarat
 
 1. **Dokploy Panel** sudah terinstall di server
 2. **Docker** dan **Docker Compose** tersedia
 3. **Git** untuk clone repository
+4. **Domain apriniageosat.co.id** sudah dikonfigurasi DNS ke server
 
 ## Langkah-langkah Deployment
 

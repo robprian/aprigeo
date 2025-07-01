@@ -78,7 +78,7 @@ module.exports = {
     
     // NextAuth
     NEXTAUTH_SECRET: 'your-secret-key-here',
-    NEXTAUTH_URL: 'http://localhost:8000'
+    NEXTAUTH_URL: 'https://apriniageosat.co.id'
   },
   
   // Health checks

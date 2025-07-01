@@ -21,7 +21,7 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
-    domains: ['localhost', 'placeholder.svg'],
+    domains: ['localhost', 'apriniageosat.co.id', 'placeholder.svg'],
   },
   output: 'standalone',
   experimental: {
