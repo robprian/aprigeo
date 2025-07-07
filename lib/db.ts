@@ -1,16 +1,11 @@
 import { Pool } from 'pg'
 import Redis from 'ioredis'
 
-// PostgreSQL connection - only create if DATABASE_URL is available and not during build
+// PostgreSQL connection - initialize immediately if DATABASE_URL is available
 let pool: Pool | null = null
 
 // Function to initialize database connection at runtime
 export function initializeDatabase() {
-  // Skip database initialization during build time
-  if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
-    return null
-  }
-  
   if (!pool && process.env.DATABASE_URL) {
     try {
       pool = new Pool({
@@ -18,13 +13,27 @@ export function initializeDatabase() {
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
         connectionTimeoutMillis: 5000,
         idleTimeoutMillis: 10000,
+        max: 10, // Maximum number of clients in the pool
+        min: 2,  // Minimum number of clients in the pool
       })
+
+      // Test the connection
+      pool.on('error', (err) => {
+        console.error('Unexpected error on idle client', err)
+      })
+
+      console.log('Database pool initialized successfully')
     } catch (error) {
-      console.warn('Database initialization failed:', error)
-      return null
+      console.error('Database initialization failed:', error)
+      pool = null
     }
   }
   return pool
+}
+
+// Initialize database connection immediately
+if (process.env.DATABASE_URL) {
+  initializeDatabase()
 }
 
 // Redis connection - only create if REDIS_URL is available or in development
@@ -32,15 +41,9 @@ let redis: Redis | null = null
 
 // Function to initialize Redis connection at runtime
 export function initializeRedis() {
-  // Skip Redis initialization during build time
-  if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
-    return null
-  }
-  
   if (!redis && (process.env.REDIS_URL || process.env.NODE_ENV === 'development')) {
     try {
       redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
-        retryDelayOnFailover: 100,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
         connectTimeout: 5000,

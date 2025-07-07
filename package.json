@@ -8,7 +8,15 @@
     "build": "next build",
     "start": "next start",
     "start:8000": "next start -p 8000",
-    "lint": "next lint"
+    "lint": "next lint",
+    "seed": "node scripts/seed-database.js",
+    "seed:simple": "node scripts/seed-simple.js",
+    "seed:comprehensive": "node scripts/seed-comprehensive.js",
+    "seed:additional": "node scripts/additional-products.js",
+    "banners:create": "node scripts/create-banner-images.js",
+    "test:comprehensive": "./scripts/test-comprehensive.sh",
+    "prod:check": "./scripts/production-ready-check.sh",
+    "setup": "./scripts/setup.sh"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
