@@ -2,74 +2,61 @@
 
 import { useState } from "react"
 import ProductCard from "./ProductCard"
-
-const tabs = ["All", "Fruits & Vegetables", "Meat & Seafood", "Best Sellers", "Pet Foods"]
-
-const products = [
-  {
-    id: 1,
-    name: "Cherry Tomatoes",
-    price: 8.5,
-    originalPrice: null,
-    image: "/placeholder.svg?height=200&width=200&text=Cherry+Tomatoes",
-    rating: 5,
-    reviews: 24,
-    badge: "SALE",
-  },
-  {
-    id: 2,
-    name: "Violet Cauliflower",
-    price: 19.0,
-    originalPrice: null,
-    image: "/placeholder.svg?height=200&width=200&text=Violet+Cauliflower",
-    rating: 4,
-    reviews: 18,
-    badge: "NEW",
-  },
-  {
-    id: 3,
-    name: "Red Onion",
-    price: 5.0,
-    originalPrice: 7.0,
-    image: "/placeholder.svg?height=200&width=200&text=Red+Onion",
-    rating: 5,
-    reviews: 12,
-    badge: null,
-  },
-  {
-    id: 4,
-    name: "Red Cabbage",
-    price: 12.0,
-    originalPrice: null,
-    image: "/placeholder.svg?height=200&width=200&text=Red+Cabbage",
-    rating: 4,
-    reviews: 35,
-    badge: null,
-  },
-  {
-    id: 5,
-    name: "Organic Lemon",
-    price: 20.0,
-    originalPrice: null,
-    image: "/placeholder.svg?height=200&width=200&text=Organic+Lemon",
-    rating: 5,
-    reviews: 42,
-    badge: "SALE",
-  },
-  {
-    id: 6,
-    name: "Organic Avocado",
-    price: 8.5,
-    originalPrice: null,
-    image: "/placeholder.svg?height=200&width=200&text=Organic+Avocado",
-    rating: 4,
-    reviews: 28,
-    badge: null,
-  },
-]
+import QuickViewModal from "./QuickViewModal"
+import CartPopup from "./CartPopup"
+import { useProducts } from "@/hooks/useProducts"
+import { useCategories } from "@/hooks/useCategories"
 
 export default function Recommendations() {
-  const [activeTab, setActiveTab] = useState("All")
+  const [activeTab, setActiveTab] = useState("all")
+  const [quickViewProduct, setQuickViewProduct] = useState<number | null>(null)
+  const [cartPopupOpen, setCartPopupOpen] = useState(false)
+  const [addedProduct, setAddedProduct] = useState<any>(null)
+
+  const { categories } = useCategories()
+  const { products, isLoading } = useProducts({ 
+    category: activeTab === "all" ? undefined : activeTab,
+    featured: true,
+    limit: 6
+  })
+
+  // Create tabs from categories
+  const tabs = [
+    { id: "all", label: "All" },
+    ...categories.slice(0, 4).map(category => ({
+      id: category.slug,
+      label: category.name
+    }))
+  ]
+
+  const handleQuickView = (productId: number) => {
+    setQuickViewProduct(productId)
+  }
+
+  const handleAddToCart = (product: any) => {
+    setAddedProduct(product)
+    setCartPopupOpen(true)
+  }
+
+  const closeQuickView = () => {
+    setQuickViewProduct(null)
+  }
+
+  // Convert API product to component format
+  const convertedProducts = products.map(product => ({
+    id: product.id,
+    name: product.name,
+    price: product.price,
+    originalPrice: product.compare_price,
+    image: product.images[0] || "/placeholder.svg?height=200&width=200",
+    rating: product.rating,
+    reviews: product.reviews,
+    category: product.category?.name,
+    badge: product.badge,
+    inStock: product.in_stock
+  }))
+
+  const selectedProduct = convertedProducts.find((p) => p.id === quickViewProduct)
 
   return (
     <section className="container mx-auto px-4 py-12">
@@ -79,30 +66,59 @@ export default function Recommendations() {
       <div className="flex flex-wrap gap-8 mb-8 border-b border-gray-200">
         {tabs.map((tab) => (
           <button
-            key={tab}
+            key={tab.id}
             className={`pb-4 text-sm font-medium transition-colors ${
-              activeTab === tab ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
+              activeTab === tab.id ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
             }`}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => setActiveTab(tab.id)}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 aspect-square rounded-lg mb-2"></div>
+              <div className="h-4 bg-gray-200 rounded mb-1"></div>
+              <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Products Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={{
-              ...product,
-              inStock: true,
-              category: "Organic Food",
-            }}
-          />
-        ))}
-      </div>
+      {!isLoading && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          {convertedProducts.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              onQuickView={handleQuickView}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Quick View Modal */}
+      {quickViewProduct && selectedProduct && (
+        <QuickViewModal
+          product={selectedProduct}
+          onClose={closeQuickView}
+          onAddToCart={handleAddToCart}
+        />
+      )}
+
+      {/* Cart Popup */}
+      {cartPopupOpen && addedProduct && (
+        <CartPopup
+          product={addedProduct}
+          onClose={() => setCartPopupOpen(false)}
+        />
+      )}
     </section>
   )
 }

@@ -57,18 +57,16 @@ export default function BestSelling() {
   const selectedProduct = convertedProducts.find((p) => p.id === quickViewProduct)
 
   return (
-    <section className="container mx-auto px-4 py-8">
-      <h2 className="text-2xl font-bold mb-6">Top Best Selling Items</h2>
+    <section className="container mx-auto px-4 py-12">
+      <h2 className="text-2xl font-bold mb-8">Top Best Selling Items</h2>
 
       {/* Tabs */}
-      <div className="flex overflow-x-auto pb-2 mb-6 border-b">
+      <div className="flex flex-wrap gap-8 mb-8 border-b border-gray-200">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            className={`px-4 py-2 whitespace-nowrap transition-colors ${
-              activeTab === tab.id
-                ? "border-b-2 border-green-500 text-green-500 font-medium"
-                : "text-gray-600 hover:text-green-500"
+            className={`pb-4 text-sm font-medium transition-colors ${
+              activeTab === tab.id ? "text-green-600 border-b-2 border-green-600" : "text-gray-600 hover:text-green-600"
             }`}
             onClick={() => setActiveTab(tab.id)}
           >
