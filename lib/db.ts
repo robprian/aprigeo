@@ -11,10 +11,15 @@ export function initializeDatabase() {
     return null
   }
   
-  if (!pool && process.env.DATABASE_URL) {
+  if (!pool && (process.env.DATABASE_URL || process.env.DB_HOST)) {
     try {
       pool = new Pool({
         connectionString: process.env.DATABASE_URL,
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'gps_survey_store',
+        user: process.env.DB_USER || 'postgres',
+        password: process.env.DB_PASSWORD || 'postgres',
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
         connectionTimeoutMillis: 5000,
         idleTimeoutMillis: 10000,

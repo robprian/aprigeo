@@ -6,48 +6,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, Wand2, Edit, Trash2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const products = [
-  {
-    id: 1,
-    name: "Trimble R12i GNSS Receiver",
-    category: "GPS",
-    price: 15999,
-    stock: 12,
-    status: "Active",
-    seo_optimized: true,
-  },
-  {
-    id: 2,
-    name: "Leica TS16 Total Station",
-    category: "Survey",
-    price: 28999,
-    stock: 8,
-    status: "Active",
-    seo_optimized: false,
-  },
-  {
-    id: 3,
-    name: "Topcon GT-1200 Robotic",
-    category: "Survey",
-    price: 32999,
-    stock: 5,
-    status: "Active",
-    seo_optimized: true,
-  },
-  {
-    id: 4,
-    name: "Iridium 9575 Satellite Phone",
-    category: "Satellite",
-    price: 1299,
-    stock: 25,
-    status: "Active",
-    seo_optimized: false,
-  },
-]
+import { useProducts } from "@/hooks/useProducts"
 
 export default function ProductsPage() {
+  const [searchTerm, setSearchTerm] = useState("")
   const [isGeneratingSEO, setIsGeneratingSEO] = useState<number | null>(null)
+  const { products, isLoading } = useProducts({ limit: 50 })
+
+  const filteredProducts = products.filter((product) =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const handleGenerateSEO = async (productId: number) => {
     setIsGeneratingSEO(productId)
@@ -55,6 +24,24 @@ export default function ProductsPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000))
     setIsGeneratingSEO(null)
     // Update product SEO status
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Products</h1>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -77,7 +64,12 @@ export default function ProductsPage() {
             <div className="flex gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input placeholder="Search products..." className="pl-10 w-64" />
+                <Input 
+                  placeholder="Search products..." 
+                  className="pl-10 w-64"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
               <Button variant="outline">
                 <Filter className="w-4 h-4 mr-2" />
@@ -101,19 +93,21 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4 font-medium">{product.name}</td>
-                    <td className="py-3 px-4">{product.category}</td>
+                    <td className="py-3 px-4">{product.category?.name || "No Category"}</td>
                     <td className="py-3 px-4">${product.price.toLocaleString()}</td>
-                    <td className="py-3 px-4">{product.stock}</td>
+                    <td className="py-3 px-4">{product.stock_quantity}</td>
                     <td className="py-3 px-4">
-                      <Badge variant={product.status === "Active" ? "default" : "secondary"}>{product.status}</Badge>
+                      <Badge variant={product.is_active ? "default" : "secondary"}>
+                        {product.is_active ? "Active" : "Inactive"}
+                      </Badge>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <Badge variant={product.seo_optimized ? "default" : "outline"}>
-                          {product.seo_optimized ? "Optimized" : "Not Optimized"}
+                        <Badge variant={product.is_featured ? "default" : "outline"}>
+                          {product.is_featured ? "Featured" : "Not Featured"}
                         </Badge>
                         <Button
                           variant="outline"

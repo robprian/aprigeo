@@ -6,61 +6,42 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, Edit, Trash2, Eye, Wand2, Globe } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const brands = [
-  {
-    id: 1,
-    name: "Trimble",
-    slug: "trimble",
-    country: "USA",
-    products: 28,
-    status: "Active",
-    seo_optimized: true,
-    logo: "/placeholder.svg?height=60&width=60",
-    website: "https://trimble.com",
-  },
-  {
-    id: 2,
-    name: "Leica Geosystems",
-    slug: "leica-geosystems",
-    country: "Switzerland",
-    products: 22,
-    status: "Active",
-    seo_optimized: false,
-    logo: "/placeholder.svg?height=60&width=60",
-    website: "https://leica-geosystems.com",
-  },
-  {
-    id: 3,
-    name: "Topcon",
-    slug: "topcon",
-    country: "Japan",
-    products: 18,
-    status: "Active",
-    seo_optimized: true,
-    logo: "/placeholder.svg?height=60&width=60",
-    website: "https://topcon.com",
-  },
-  {
-    id: 4,
-    name: "Sokkia",
-    slug: "sokkia",
-    country: "Japan",
-    products: 15,
-    status: "Active",
-    seo_optimized: false,
-    logo: "/placeholder.svg?height=60&width=60",
-    website: "https://sokkia.com",
-  },
-]
+import { useBrands } from "@/hooks/useBrands"
 
 export default function BrandsPage() {
+  const [searchTerm, setSearchTerm] = useState("")
   const [isGeneratingSEO, setIsGeneratingSEO] = useState<number | null>(null)
+  const { brands, isLoading } = useBrands({ includeCount: true })
+
+  const filteredBrands = brands.filter((brand) =>
+    brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (brand.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const handleGenerateSEO = async (brandId: number) => {
     setIsGeneratingSEO(brandId)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsGeneratingSEO(null)
+    // Simulate SEO generation
+    setTimeout(() => {
+      setIsGeneratingSEO(null)
+    }, 2000)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Brands</h1>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -95,12 +76,12 @@ export default function BrandsPage() {
         <CardContent>
           {/* Mobile view */}
           <div className="block sm:hidden space-y-4">
-            {brands.map((brand) => (
+            {filteredBrands.map((brand) => (
               <div key={brand.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <img
-                      src={brand.logo || "/placeholder.svg"}
+                      src={brand.logo_url || "/placeholder.svg"}
                       alt={brand.name}
                       className="w-12 h-12 rounded-lg object-cover"
                     />
@@ -109,16 +90,18 @@ export default function BrandsPage() {
                       <p className="text-xs text-gray-500">{brand.country}</p>
                     </div>
                   </div>
-                  <Badge variant={brand.status === "Active" ? "default" : "secondary"}>{brand.status}</Badge>
+                  <Badge variant={brand.is_active ? "default" : "secondary"}>
+                    {brand.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium">{brand.products} products</p>
+                    <p className="text-sm font-medium">{brand.products_count || 0} products</p>
                     <div className="flex items-center gap-1 mt-1">
                       <Globe className="w-3 h-3 text-gray-400" />
                       <a
-                        href={brand.website}
+                        href={brand.website_url}
                         className="text-xs text-blue-600 hover:underline"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -127,8 +110,8 @@ export default function BrandsPage() {
                       </a>
                     </div>
                   </div>
-                  <Badge variant={brand.seo_optimized ? "default" : "outline"} className="text-xs">
-                    {brand.seo_optimized ? "SEO ✓" : "SEO ✗"}
+                  <Badge variant="outline" className="text-xs">
+                    Featured: {brand.featured ? "Yes" : "No"}
                   </Badge>
                 </div>
 
@@ -167,12 +150,12 @@ export default function BrandsPage() {
                 </tr>
               </thead>
               <tbody>
-                {brands.map((brand) => (
+                {filteredBrands.map((brand) => (
                   <tr key={brand.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3">
                         <img
-                          src={brand.logo || "/placeholder.svg"}
+                          src={brand.logo_url || "/placeholder.svg"}
                           alt={brand.name}
                           className="w-10 h-10 rounded-lg object-cover"
                         />
@@ -183,10 +166,10 @@ export default function BrandsPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4">{brand.country}</td>
-                    <td className="py-3 px-4">{brand.products}</td>
+                    <td className="py-3 px-4">{brand.products_count || 0}</td>
                     <td className="py-3 px-4">
                       <a
-                        href={brand.website}
+                        href={brand.website_url}
                         className="text-blue-600 hover:underline text-sm"
                         target="_blank"
                         rel="noopener noreferrer"
@@ -196,12 +179,14 @@ export default function BrandsPage() {
                       </a>
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant={brand.status === "Active" ? "default" : "secondary"}>{brand.status}</Badge>
+                      <Badge variant={brand.is_active ? "default" : "secondary"}>
+                        {brand.is_active ? "Active" : "Inactive"}
+                      </Badge>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <Badge variant={brand.seo_optimized ? "default" : "outline"}>
-                          {brand.seo_optimized ? "Optimized" : "Not Optimized"}
+                        <Badge variant={brand.featured ? "default" : "outline"}>
+                          {brand.featured ? "Featured" : "Not Featured"}
                         </Badge>
                         <Button
                           variant="outline"

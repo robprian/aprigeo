@@ -6,57 +6,42 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, Edit, Trash2, Eye, Wand2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-
-const categories = [
-  {
-    id: 1,
-    name: "GPS Equipment",
-    slug: "gps-equipment",
-    parent: null,
-    products: 45,
-    status: "Active",
-    seo_optimized: true,
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    id: 2,
-    name: "Survey Equipment",
-    slug: "survey-equipment",
-    parent: null,
-    products: 32,
-    status: "Active",
-    seo_optimized: false,
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    id: 3,
-    name: "GNSS Receivers",
-    slug: "gnss-receivers",
-    parent: "GPS Equipment",
-    products: 28,
-    status: "Active",
-    seo_optimized: true,
-    image: "/placeholder.svg?height=60&width=60",
-  },
-  {
-    id: 4,
-    name: "Total Stations",
-    slug: "total-stations",
-    parent: "Survey Equipment",
-    products: 18,
-    status: "Active",
-    seo_optimized: false,
-    image: "/placeholder.svg?height=60&width=60",
-  },
-]
+import { useCategories } from "@/hooks/useCategories"
 
 export default function CategoriesPage() {
+  const [searchTerm, setSearchTerm] = useState("")
   const [isGeneratingSEO, setIsGeneratingSEO] = useState<number | null>(null)
+  const { categories, isLoading } = useCategories(true) // includeCount parameter
+
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (category.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   const handleGenerateSEO = async (categoryId: number) => {
     setIsGeneratingSEO(categoryId)
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setIsGeneratingSEO(null)
+    // Simulate SEO generation
+    setTimeout(() => {
+      setIsGeneratingSEO(null)
+    }, 2000)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold">Categories</h1>
+        </div>
+        <div className="animate-pulse">
+          <div className="h-32 bg-gray-200 rounded mb-4"></div>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-16 bg-gray-200 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -91,30 +76,32 @@ export default function CategoriesPage() {
         <CardContent>
           {/* Mobile view */}
           <div className="block sm:hidden space-y-4">
-            {categories.map((category) => (
+            {filteredCategories.map((category) => (
               <div key={category.id} className="border rounded-lg p-4 space-y-3">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <img
-                      src={category.image || "/placeholder.svg"}
+                      src={category.image_url || "/placeholder.svg"}
                       alt={category.name}
                       className="w-12 h-12 rounded-lg object-cover"
                     />
                     <div>
                       <h3 className="font-medium text-sm">{category.name}</h3>
-                      <p className="text-xs text-gray-500">{category.parent || "Root Category"}</p>
+                      <p className="text-xs text-gray-500">{category.parent_id ? "Child Category" : "Root Category"}</p>
                     </div>
                   </div>
-                  <Badge variant={category.status === "Active" ? "default" : "secondary"}>{category.status}</Badge>
+                  <Badge variant={category.is_active ? "default" : "secondary"}>
+                    {category.is_active ? "Active" : "Inactive"}
+                  </Badge>
                 </div>
 
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm font-medium">{category.products} products</p>
+                    <p className="text-sm font-medium">{category.products_count || 0} products</p>
                     <p className="text-xs text-gray-500">/{category.slug}</p>
                   </div>
-                  <Badge variant={category.seo_optimized ? "default" : "outline"} className="text-xs">
-                    {category.seo_optimized ? "SEO ✓" : "SEO ✗"}
+                  <Badge variant="outline" className="text-xs">
+                    Sort: {category.sort_order}
                   </Badge>
                 </div>
 
@@ -152,12 +139,12 @@ export default function CategoriesPage() {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((category) => (
+                {filteredCategories.map((category) => (
                   <tr key={category.id} className="border-b hover:bg-gray-50">
                     <td className="py-3 px-4">
                       <div className="flex items-center space-x-3">
                         <img
-                          src={category.image || "/placeholder.svg"}
+                          src={category.image_url || "/placeholder.svg"}
                           alt={category.name}
                           className="w-10 h-10 rounded-lg object-cover"
                         />
@@ -167,15 +154,17 @@ export default function CategoriesPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3 px-4">{category.parent || "Root"}</td>
-                    <td className="py-3 px-4">{category.products}</td>
+                    <td className="py-3 px-4">{category.parent_id ? "Child" : "Root"}</td>
+                    <td className="py-3 px-4">{category.products_count || 0}</td>
                     <td className="py-3 px-4">
-                      <Badge variant={category.status === "Active" ? "default" : "secondary"}>{category.status}</Badge>
+                      <Badge variant={category.is_active ? "default" : "secondary"}>
+                        {category.is_active ? "Active" : "Inactive"}
+                      </Badge>
                     </td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2">
-                        <Badge variant={category.seo_optimized ? "default" : "outline"}>
-                          {category.seo_optimized ? "Optimized" : "Not Optimized"}
+                        <Badge variant="outline">
+                          Sort: {category.sort_order}
                         </Badge>
                         <Button
                           variant="outline"

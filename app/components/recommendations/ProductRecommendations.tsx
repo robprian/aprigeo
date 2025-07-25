@@ -1,31 +1,17 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Heart, ShoppingCart, Eye, Star, TrendingUp, Users, Clock } from "lucide-react"
-import Image from "next/image"
 import Link from "next/link"
 import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
-
-interface Product {
-  id: string
-  name: string
-  price: number
-  originalPrice?: number
-  image: string
-  rating: number
-  reviewCount: number
-  category: string
-  brand: string
-  isNew?: boolean
-  isBestseller?: boolean
-  discount?: number
-}
+import { useProducts } from "@/hooks/useProducts"
+import { Product } from "@/lib/types"
+import { formatCurrency } from "@/lib/currency"
 
 interface RecommendationSection {
   title: string
@@ -34,80 +20,6 @@ interface RecommendationSection {
   products: Product[]
   type: "trending" | "personalized" | "similar" | "recently_viewed" | "bestsellers"
 }
-
-// Mock product data
-const mockProducts: Product[] = [
-  {
-    id: "1",
-    name: "Trimble R12i GNSS Receiver",
-    price: 15999,
-    originalPrice: 17999,
-    image: "/placeholder.svg?height=200&width=200&text=Trimble+R12i",
-    rating: 4.8,
-    reviewCount: 124,
-    category: "GPS Receivers",
-    brand: "Trimble",
-    isBestseller: true,
-    discount: 11,
-  },
-  {
-    id: "2",
-    name: "Leica TS16 Total Station",
-    price: 28999,
-    image: "/placeholder.svg?height=200&width=200&text=Leica+TS16",
-    rating: 4.9,
-    reviewCount: 89,
-    category: "Total Stations",
-    brand: "Leica",
-    isNew: true,
-  },
-  {
-    id: "3",
-    name: "Topcon GT-1200 Robotic",
-    price: 32999,
-    originalPrice: 35999,
-    image: "/placeholder.svg?height=200&width=200&text=Topcon+GT1200",
-    rating: 4.7,
-    reviewCount: 156,
-    category: "Total Stations",
-    brand: "Topcon",
-    discount: 8,
-  },
-  {
-    id: "4",
-    name: "Iridium 9575 Satellite Phone",
-    price: 1299,
-    image: "/placeholder.svg?height=200&width=200&text=Iridium+9575",
-    rating: 4.6,
-    reviewCount: 203,
-    category: "Satellite Phones",
-    brand: "Iridium",
-    isBestseller: true,
-  },
-  {
-    id: "5",
-    name: "Spectra Precision Laser Level",
-    price: 899,
-    originalPrice: 1099,
-    image: "/placeholder.svg?height=200&width=200&text=Spectra+Laser",
-    rating: 4.5,
-    reviewCount: 78,
-    category: "Laser Levels",
-    brand: "Spectra",
-    discount: 18,
-  },
-  {
-    id: "6",
-    name: "DJI Phantom 4 RTK Drone",
-    price: 6499,
-    image: "/placeholder.svg?height=200&width=200&text=DJI+Phantom",
-    rating: 4.8,
-    reviewCount: 312,
-    category: "Drones",
-    brand: "DJI",
-    isNew: true,
-  },
-]
 
 export default function ProductRecommendations({
   currentProductId,
@@ -118,98 +30,34 @@ export default function ProductRecommendations({
     viewedProducts?: string[]
     purchaseHistory?: string[]
     searchHistory?: string[]
-    categories?: string[]
   }
 }) {
   const [recommendations, setRecommendations] = useState<RecommendationSection[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [loading, setLoading] = useState(true)
+
   const { addToCart } = useCart()
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
 
-  useEffect(() => {
-    // Simulate AI recommendation engine
-    const generateRecommendations = () => {
-      const sections: RecommendationSection[] = []
-
-      // Trending Products
-      sections.push({
-        title: "Trending Now",
-        subtitle: "Popular products this week",
-        icon: <TrendingUp className="w-5 h-5" />,
-        type: "trending",
-        products: mockProducts.filter((p) => p.isBestseller || p.isNew).slice(0, 4),
-      })
-
-      // Personalized Recommendations
-      if (userBehavior.viewedProducts?.length || userBehavior.purchaseHistory?.length) {
-        sections.push({
-          title: "Recommended for You",
-          subtitle: "Based on your browsing and purchase history",
-          icon: <Users className="w-5 h-5" />,
-          type: "personalized",
-          products: mockProducts.slice(1, 5),
-        })
-      }
-
-      // Similar Products (if viewing a specific product)
-      if (currentProductId) {
-        const currentProduct = mockProducts.find((p) => p.id === currentProductId)
-        if (currentProduct) {
-          sections.push({
-            title: "Similar Products",
-            subtitle: `Other ${currentProduct.category.toLowerCase()} you might like`,
-            icon: <Eye className="w-5 h-5" />,
-            type: "similar",
-            products: mockProducts
-              .filter((p) => p.category === currentProduct.category && p.id !== currentProductId)
-              .slice(0, 4),
-          })
-        }
-      }
-
-      // Recently Viewed
-      if (userBehavior.viewedProducts?.length) {
-        sections.push({
-          title: "Recently Viewed",
-          subtitle: "Products you looked at recently",
-          icon: <Clock className="w-5 h-5" />,
-          type: "recently_viewed",
-          products: mockProducts.filter((p) => userBehavior.viewedProducts?.includes(p.id)).slice(0, 4),
-        })
-      }
-
-      // Bestsellers
-      sections.push({
-        title: "Best Sellers",
-        subtitle: "Most popular products in all categories",
-        icon: <Star className="w-5 h-5" />,
-        type: "bestsellers",
-        products: mockProducts.filter((p) => p.isBestseller).slice(0, 4),
-      })
-
-      setRecommendations(sections)
-      setIsLoading(false)
-    }
-
-    // Simulate API delay
-    setTimeout(generateRecommendations, 1000)
-  }, [currentProductId, userBehavior])
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
-  }
+  // Fetch data menggunakan hooks
+  const { products: featuredProducts } = useProducts({ featured: true, limit: 8 })
+  const { products: latestProducts } = useProducts({
+    sort: "created_at",
+    order: "desc",
+    limit: 6,
+  })
+  const { products: trendingProducts } = useProducts({
+    sort: "rating",
+    order: "desc", 
+    limit: 8,
+  })
 
   const handleAddToCart = (product: Product) => {
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image,
-      quantity: 1,
-    })
+      image: product.images[0] || "/placeholder.svg",
+    }, 1)
   }
 
   const handleWishlistToggle = (product: Product) => {
@@ -220,161 +68,198 @@ export default function ProductRecommendations({
         id: product.id,
         name: product.name,
         price: product.price,
-        image: product.image,
+        image: product.images[0] || "/placeholder.svg",
       })
     }
   }
 
   const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star key={star} className={`w-4 h-4 ${star <= rating ? "text-yellow-400 fill-current" : "text-gray-300"}`} />
-        ))}
-        <span className="text-sm text-gray-600 ml-1">({rating})</span>
-      </div>
-    )
+    const stars = []
+    const fullStars = Math.floor(rating)
+    const hasHalfStar = rating % 1 >= 0.5
+
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />)
+    }
+
+    if (hasHalfStar) {
+      stars.push(<Star key="half" className="h-4 w-4 fill-yellow-400/50 text-yellow-400" />)
+    }
+
+    const remainingStars = 5 - Math.ceil(rating)
+    for (let i = 0; i < remainingStars; i++) {
+      stars.push(<Star key={`empty-${i}`} className="h-4 w-4 text-gray-300" />)
+    }
+
+    return stars
   }
 
-  const ProductCard = ({ product }: { product: Product }) => (
-    <Card className="group hover:shadow-lg transition-all duration-300">
-      <CardContent className="p-4">
-        <div className="relative mb-4">
-          <Link href={`/product/${product.id}`}>
-            <div className="aspect-square relative overflow-hidden rounded-lg bg-gray-100">
-              <Image
-                src={product.image || "/placeholder.svg"}
-                alt={product.name}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              {product.discount && (
-                <Badge className="absolute top-2 left-2 bg-red-500 text-white">-{product.discount}%</Badge>
-              )}
-              {product.isNew && <Badge className="absolute top-2 right-2 bg-green-500 text-white">New</Badge>}
-              {product.isBestseller && !product.isNew && (
-                <Badge className="absolute top-2 right-2 bg-blue-500 text-white">Bestseller</Badge>
-              )}
-            </div>
-          </Link>
+  useEffect(() => {
+    const generateRecommendations = () => {
+      if (!featuredProducts && !latestProducts && !trendingProducts) return
 
-          {/* Hover Actions */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-300 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => handleWishlistToggle(product)}
-                className="bg-white hover:bg-gray-100"
-              >
-                <Heart className={`w-4 h-4 ${isInWishlist(product.id) ? "fill-red-500 text-red-500" : ""}`} />
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => handleAddToCart(product)}
-                className="bg-white hover:bg-gray-100"
-              >
-                <ShoppingCart className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
+      const sections: RecommendationSection[] = []
 
-        <div className="space-y-2">
-          <div className="text-xs text-gray-500 uppercase tracking-wide">
-            {product.brand} • {product.category}
-          </div>
+      // Produk Unggulan GPS Tools
+      if (featuredProducts && featuredProducts.length > 0) {
+        sections.push({
+          title: "GPS Tools Unggulan",
+          subtitle: "Peralatan GPS terbaik pilihan kami untuk surveying dan mapping",
+          icon: <TrendingUp className="h-5 w-5 text-orange-500" />,
+          products: featuredProducts.slice(0, 4),
+          type: "trending",
+        })
+      }
 
-          <Link href={`/product/${product.id}`}>
-            <h3 className="font-medium text-gray-900 hover:text-green-600 transition-colors line-clamp-2">
-              {product.name}
-            </h3>
-          </Link>
+      // GPS Tools Terbaru
+      if (latestProducts && latestProducts.length > 0) {
+        sections.push({
+          title: "GPS Tools Terbaru",
+          subtitle: "Koleksi terbaru dari berbagai brand GPS dan surveying equipment",
+          icon: <Clock className="h-5 w-5 text-blue-500" />,
+          products: latestProducts.slice(0, 4),
+          type: "recently_viewed",
+        })
+      }
 
-          {renderStars(product.rating)}
+      // GPS Tools Populer
+      if (trendingProducts && trendingProducts.length > 0) {
+        sections.push({
+          title: "GPS Tools Terpopuler",
+          subtitle: "Peralatan GPS dengan rating tertinggi dari para profesional",
+          icon: <Users className="h-5 w-5 text-green-500" />,
+          products: trendingProducts.slice(0, 4),
+          type: "bestsellers",
+        })
+      }
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-lg text-gray-900">{formatCurrency(product.price)}</span>
-              {product.originalPrice && (
-                <span className="text-sm text-gray-500 line-through">{formatCurrency(product.originalPrice)}</span>
-              )}
-            </div>
-            <div className="text-xs text-gray-500">{product.reviewCount} reviews</div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+      setRecommendations(sections)
+      setLoading(false)
+    }
 
-  if (isLoading) {
+    generateRecommendations()
+  }, [featuredProducts, latestProducts, trendingProducts])
+
+  if (loading) {
     return (
-      <div className="space-y-8">
-        {[1, 2, 3].map((i) => (
-          <Card key={i}>
-            <CardHeader>
-              <div className="animate-pulse">
-                <div className="h-6 bg-gray-200 rounded w-1/4 mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/3"></div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {[1, 2, 3, 4].map((j) => (
-                  <div key={j} className="animate-pulse">
-                    <div className="aspect-square bg-gray-200 rounded-lg mb-4"></div>
-                    <div className="space-y-2">
-                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-                      <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="space-y-6">
+        <div className="h-8 w-48 animate-pulse bg-gray-200 rounded" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="aspect-square bg-gray-200 rounded-lg mb-4" />
+              <div className="h-4 bg-gray-200 rounded mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-3/4" />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-8">
-      {recommendations.map((section, index) => (
-        <Card key={index}>
-          <CardHeader>
-            <div className="flex items-center justify-between">
+      {recommendations.map((section, sectionIndex) => (
+        <Card key={sectionIndex} className="w-full">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              {section.icon}
               <div>
-                <CardTitle className="flex items-center gap-2">
-                  {section.icon}
-                  {section.title}
-                </CardTitle>
-                <p className="text-sm text-gray-600 mt-1">{section.subtitle}</p>
+                <h3 className="text-lg font-semibold">{section.title}</h3>
+                <p className="text-sm text-gray-600 font-normal">{section.subtitle}</p>
               </div>
-              <Button variant="outline" size="sm">
-                View All
-              </Button>
-            </div>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {section.products.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <div key={product.id} className="group relative">
+                  <div className="space-y-3">
+                    <div className="relative overflow-hidden rounded-lg bg-white shadow">
+                      <img
+                        alt={product.name}
+                        className="aspect-square w-full object-cover transition-transform hover:scale-105"
+                        height="200"
+                        src={product.images[0] || "/placeholder.svg"}
+                        width="200"
+                      />
+                      {product.compare_price && product.compare_price > product.price && (
+                        <Badge className="absolute top-2 left-2 bg-red-500 text-white">
+                          -{Math.round(((product.compare_price - product.price) / product.compare_price) * 100)}%
+                        </Badge>
+                      )}
+                      {product.is_featured && <Badge className="absolute top-2 right-2 bg-green-500 text-white">Featured</Badge>}
+                      {product.badge && (
+                        <Badge className="absolute top-2 right-2 bg-blue-500 text-white">{product.badge}</Badge>
+                      )}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="flex h-full items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleAddToCart(product)}
+                            className="bg-white text-black hover:bg-gray-100"
+                          >
+                            <ShoppingCart className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleWishlistToggle(product)}
+                            className={`bg-white hover:bg-gray-100 ${
+                              isInWishlist(product.id) ? "text-red-500" : "text-black"
+                            }`}
+                          >
+                            <Heart className={`h-4 w-4 ${isInWishlist(product.id) ? "fill-current" : ""}`} />
+                          </Button>
+                          <Button size="sm" variant="secondary" asChild className="bg-white text-black hover:bg-gray-100">
+                            <Link href={`/product/${product.slug}`}>
+                              <Eye className="h-4 w-4" />
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Link href={`/product/${product.slug}`} className="block">
+                        <h4 className="font-medium text-sm hover:text-blue-600 transition-colors line-clamp-2">
+                          {product.name}
+                        </h4>
+                      </Link>
+                      <div className="text-xs text-gray-600">
+                        {product.brand?.name || "GPS Tools"} • {product.category?.name || "Surveying Equipment"}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {product.rating && renderStars(product.rating)}
+                        <span className="text-xs text-gray-500 ml-1">({product.rating || 0})</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-lg">{formatCurrency(product.price)}</span>
+                        {product.compare_price && product.compare_price > product.price && (
+                          <span className="text-sm text-gray-500 line-through">{formatCurrency(product.compare_price)}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">{product.reviews || 0} reviews</div>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
+            
+            {section.products.length === 0 && (
+              <div className="text-center py-8">
+                <p className="text-gray-500">Tidak ada produk GPS tools yang tersedia untuk kategori ini.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
-
-      {recommendations.length === 0 && (
+      
+      {recommendations.length === 0 && !loading && (
         <Card>
-          <CardContent className="text-center py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-              <TrendingUp className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="text-xl font-medium mb-2">No Recommendations Available</h3>
-            <p className="text-gray-600">Browse our products to get personalized recommendations</p>
+          <CardContent className="py-8 text-center">
+            <p className="text-gray-500">Tidak ada rekomendasi GPS tools yang tersedia saat ini.</p>
+            <p className="text-sm text-gray-400 mt-2">Silakan kembali lagi nanti untuk melihat produk GPS terbaru.</p>
           </CardContent>
         </Card>
       )}

@@ -12,21 +12,56 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, '.'),
     }
+    
+    // Optimize chunk loading
+    if (!isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            default: {
+              minChunks: 1,
+              priority: -20,
+              reuseExistingChunk: true,
+            },
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              priority: -10,
+              chunks: 'all',
+            },
+          },
+        },
+      }
+    }
+    
     return config
   },
   images: {
     unoptimized: true,
-    domains: ['localhost', 'apriniageosat.co.id', 'placeholder.svg'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+      },
+      {
+        protocol: 'https',
+        hostname: 'apriniageosat.co.id',
+      },
+      {
+        protocol: 'https',
+        hostname: 'placeholder.svg',
+      },
+    ],
   },
   output: 'standalone',
-  experimental: {
-    serverComponentsExternalPackages: ['pg', 'ioredis'],
-  },
+  serverExternalPackages: ['pg', 'ioredis'],
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
     REDIS_URL: process.env.REDIS_URL,

@@ -1,5 +1,5 @@
 services:
-  gps-survey-store:
+  apriniageosat:
     build:
       context: .
       dockerfile: Dockerfile
@@ -7,11 +7,11 @@ services:
       - "8000:8000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL:-postgresql://postgres:password@postgres:5432/gps_survey_store}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://apriniageosat:Kx9Qm7nP8rT2vW5yZ3aB6cE9fH1jL4mN@postgres:5432/apriniageosatcoid}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - NEXT_PUBLIC_MEILISEARCH_HOST=${NEXT_PUBLIC_MEILISEARCH_HOST:-http://meilisearch:7700}
-      - NEXT_PUBLIC_MEILISEARCH_API_KEY=${NEXT_PUBLIC_MEILISEARCH_API_KEY:-masterKey}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-your-secret-key}
+      - NEXT_PUBLIC_MEILISEARCH_API_KEY=${NEXT_PUBLIC_MEILISEARCH_API_KEY:-Mx8Yr4Pq7Vz2Nn6Bb3Ff9Cc1Dd5Ee8Aa}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-Zx3Vb9Nm2Qw8Er7Ty4Ui6Op1As5Df0Gh3Jk9Lz6Xc2Vb8Nm4Qw1Er5Ty9Ui}
       - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:8000}
     depends_on:
       - postgres
@@ -26,9 +26,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-gps_survey_store}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
+      - POSTGRES_DB=${POSTGRES_DB:-apriniageosatcoid}
+      - POSTGRES_USER=${POSTGRES_USER:-apriniageosat}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-Kx9Qm7nP8rT2vW5yZ3aB6cE9fH1jL4mN}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/schema_postgres.sql:/docker-entrypoint-initdb.d/01-schema.sql
@@ -52,7 +52,7 @@ services:
     ports:
       - "7700:7700"
     environment:
-      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-masterKey}
+      - MEILI_MASTER_KEY=${MEILI_MASTER_KEY:-Mx8Yr4Pq7Vz2Nn6Bb3Ff9Cc1Dd5Ee8Aa}
       - MEILI_ENV=${MEILI_ENV:-production}
     volumes:
       - meilisearch_data:/meili_data

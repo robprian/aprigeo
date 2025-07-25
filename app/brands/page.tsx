@@ -7,116 +7,47 @@ import { Search, Grid, List, Star, MapPin, Phone, Mail, Globe } from "lucide-rea
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-
-const brands = [
-  {
-    id: 1,
-    name: "TechPro Solutions",
-    logo: "/placeholder.svg?height=80&width=80&text=TechPro",
-    description: "Leading provider of GPS and surveying equipment with over 20 years of experience.",
-    rating: 4.8,
-    reviewCount: 156,
-    location: "Jakarta, Indonesia",
-    phone: "+62 21 1234 5678",
-    email: "info@techpro.co.id",
-    website: "www.techpro.co.id",
-    productCount: 45,
-    categories: ["GPS Receivers", "Total Stations", "Theodolites"],
-    featured: true,
-  },
-  {
-    id: 2,
-    name: "SurveyMaster",
-    logo: "/placeholder.svg?height=80&width=80&text=SurveyMaster",
-    description: "Specialized in precision surveying instruments and laser measurement tools.",
-    rating: 4.6,
-    reviewCount: 89,
-    location: "Surabaya, Indonesia",
-    phone: "+62 31 9876 5432",
-    email: "contact@surveymaster.id",
-    website: "www.surveymaster.id",
-    productCount: 32,
-    categories: ["Laser Levels", "Measuring Tools", "Accessories"],
-    featured: false,
-  },
-  {
-    id: 3,
-    name: "GeoTech Indonesia",
-    logo: "/placeholder.svg?height=80&width=80&text=GeoTech",
-    description: "Innovative geospatial technology solutions for modern surveying needs.",
-    rating: 4.9,
-    reviewCount: 203,
-    location: "Bandung, Indonesia",
-    phone: "+62 22 5555 7777",
-    email: "hello@geotech.co.id",
-    website: "www.geotech.co.id",
-    productCount: 67,
-    categories: ["Drones & UAVs", "GPS Receivers", "Software"],
-    featured: true,
-  },
-  {
-    id: 4,
-    name: "Precision Instruments",
-    logo: "/placeholder.svg?height=80&width=80&text=Precision",
-    description: "High-precision measurement and surveying equipment for professionals.",
-    rating: 4.7,
-    reviewCount: 124,
-    location: "Medan, Indonesia",
-    phone: "+62 61 3333 4444",
-    email: "sales@precision.id",
-    website: "www.precision.id",
-    productCount: 28,
-    categories: ["Total Stations", "Theodolites", "Accessories"],
-    featured: false,
-  },
-  {
-    id: 5,
-    name: "NaviSat Systems",
-    logo: "/placeholder.svg?height=80&width=80&text=NaviSat",
-    description: "Satellite navigation and communication equipment specialists.",
-    rating: 4.5,
-    reviewCount: 76,
-    location: "Makassar, Indonesia",
-    phone: "+62 411 2222 3333",
-    email: "info@navisat.co.id",
-    website: "www.navisat.co.id",
-    productCount: 19,
-    categories: ["Satellite Phones", "GPS Receivers", "Communication"],
-    featured: false,
-  },
-  {
-    id: 6,
-    name: "MeasureTech Pro",
-    logo: "/placeholder.svg?height=80&width=80&text=MeasureTech",
-    description: "Professional measurement solutions for construction and surveying.",
-    rating: 4.8,
-    reviewCount: 167,
-    location: "Yogyakarta, Indonesia",
-    phone: "+62 274 8888 9999",
-    email: "support@measuretech.id",
-    website: "www.measuretech.id",
-    productCount: 41,
-    categories: ["Laser Levels", "Measuring Tools", "Construction Tools"],
-    featured: true,
-  },
-]
+import { useBrands, useFeaturedBrands } from "@/hooks/useBrands"
 
 export default function BrandsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [filterCategory, setFilterCategory] = useState("all")
 
+  const { brands, isLoading } = useBrands({ includeCount: true })
+  const { brands: featuredBrands } = useFeaturedBrands()
+
   const filteredBrands = brands.filter((brand) => {
     const matchesSearch =
       brand.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      brand.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory =
-      filterCategory === "all" ||
-      brand.categories.some((cat) => cat.toLowerCase().includes(filterCategory.toLowerCase()))
+      (brand.description || "").toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // For now, since we don't have categories in brand table, we'll match all
+    const matchesCategory = filterCategory === "all"
+    
     return matchesSearch && matchesCategory
   })
 
-  const featuredBrands = brands.filter((brand) => brand.featured)
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white rounded-lg p-6">
+                  <div className="h-16 bg-gray-200 rounded mb-4"></div>
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -144,7 +75,7 @@ export default function BrandsPage() {
                   <div className="flex items-center gap-4 mb-4">
                     <div className="relative w-16 h-16">
                       <Image
-                        src={brand.logo || "/placeholder.svg"}
+                        src={brand.logo_url || "/placeholder.svg"}
                         alt={brand.name}
                         fill
                         className="object-contain rounded-lg"
@@ -155,14 +86,14 @@ export default function BrandsPage() {
                       <h3 className="font-bold text-gray-900">{brand.name}</h3>
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{brand.rating}</span>
-                        <span className="text-sm text-gray-500">({brand.reviewCount})</span>
+                        <span className="text-sm font-medium">{brand.rating || 4.5}</span>
+                        <span className="text-sm text-gray-500">(0)</span>
                       </div>
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">{brand.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{brand.productCount} products</span>
+                    <span className="text-sm text-gray-500">{brand.products_count || 0} products</span>
                     <Link href={`/brands/${brand.id}`}>
                       <Button size="sm" variant="outline">
                         View Store
@@ -236,7 +167,7 @@ export default function BrandsPage() {
                 <div className={`flex items-center gap-4 ${viewMode === "list" ? "flex-shrink-0" : "mb-4"}`}>
                   <div className="relative w-16 h-16">
                     <Image
-                      src={brand.logo || "/placeholder.svg"}
+                      src={brand.logo_url || "/placeholder.svg"}
                       alt={brand.name}
                       fill
                       className="object-contain rounded-lg"
@@ -247,8 +178,8 @@ export default function BrandsPage() {
                     <h3 className="font-bold text-gray-900">{brand.name}</h3>
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">{brand.rating}</span>
-                      <span className="text-sm text-gray-500">({brand.reviewCount})</span>
+                      <span className="text-sm font-medium">{brand.rating || 4.5}</span>
+                      <span className="text-sm text-gray-500">(0)</span>
                     </div>
                   </div>
                 </div>
@@ -257,34 +188,34 @@ export default function BrandsPage() {
                   <p className="text-sm text-gray-600 mb-4">{brand.description}</p>
 
                   <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="w-4 h-4" />
-                      <span>{brand.location}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="w-4 h-4" />
-                      <span>{brand.phone}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Mail className="w-4 h-4" />
-                      <span>{brand.email}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Globe className="w-4 h-4" />
-                      <span>{brand.website}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {brand.categories.map((category) => (
-                      <span key={category} className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
-                        {category}
-                      </span>
-                    ))}
+                    {brand.country && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <MapPin className="w-4 h-4" />
+                        <span>{brand.country}</span>
+                      </div>
+                    )}
+                    {brand.phone && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Phone className="w-4 h-4" />
+                        <span>{brand.phone}</span>
+                      </div>
+                    )}
+                    {brand.email && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Mail className="w-4 h-4" />
+                        <span>{brand.email}</span>
+                      </div>
+                    )}
+                    {brand.website_url && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Globe className="w-4 h-4" />
+                        <span>{brand.website_url}</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{brand.productCount} products</span>
+                    <span className="text-sm text-gray-500">{brand.products_count || 0} products</span>
                     <Link href={`/brands/${brand.id}`}>
                       <Button size="sm">View Store</Button>
                     </Link>
