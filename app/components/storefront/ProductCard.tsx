@@ -17,6 +17,7 @@ interface ProductCardProps {
   product: {
     id: number
     name: string
+    slug?: string
     price: number
     originalPrice?: number
     image: string
@@ -146,9 +147,9 @@ export default function ProductCard({ product, onQuickView, className = "" }: Pr
       <CardContent className="p-0">
         {/* Product Image */}
         <div className="relative pt-4 px-4">
-          <Link href={`/product/${product.id}`} className="block overflow-hidden relative aspect-square">
+          <Link href={`/product/${product.slug || product.id}`} className="block overflow-hidden relative aspect-square">
             <Image
-              src={product.image || "/placeholder.svg"}
+              src={product.image || product.images?.[0] || "/placeholder.svg"}
               alt={product.name}
               fill
               className="object-contain group-hover:scale-105 transition-transform duration-300"
@@ -181,26 +182,35 @@ export default function ProductCard({ product, onQuickView, className = "" }: Pr
           {product.category && <div className="text-xs text-gray-500 mb-1">{product.category}</div>}
 
           {/* Product Name */}
-          <Link href={`/product/${product.id}`}>
+          <Link href={`/product/${product.slug || product.id}`}>
             <h3 className="font-medium text-gray-800 mb-1 hover:text-green-500 transition-colors line-clamp-2">
               {product.name}
             </h3>
           </Link>
 
           {/* Rating */}
-          {product.rating && (
-            <div className="flex items-center mb-2">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-3 h-3 ${i < product.rating! ? "text-yellow-400 fill-current" : "text-gray-300"}`}
-                  />
-                ))}
-              </div>
-              {product.reviews && <span className="text-xs text-gray-500 ml-1">({product.reviews})</span>}
+          <div className="flex items-center mb-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-3 h-3 ${
+                    product.rating && i < Math.floor(product.rating) 
+                      ? "text-yellow-400 fill-current" 
+                      : "text-gray-300"
+                  }`}
+                />
+              ))}
             </div>
-          )}
+            {product.rating && product.rating > 0 && (
+              <span className="text-xs text-gray-500 ml-1">
+                ({product.reviews || 0} review{(product.reviews || 0) !== 1 ? 's' : ''})
+              </span>
+            )}
+            {(!product.rating || product.rating === 0) && (
+              <span className="text-xs text-gray-500 ml-1">No reviews yet</span>
+            )}
+          </div>
 
           {/* Price */}
           <div className="flex items-center">

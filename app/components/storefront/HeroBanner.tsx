@@ -6,7 +6,43 @@ import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 
-const bannerSlides = [
+interface BannerData {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  image_url: string
+  button_text: string
+  button_link: string
+  discount_percentage: number
+  background_color: string
+  text_color: string
+  position_order: number
+}
+
+interface BannerSlide {
+  id: number
+  title: string
+  mainText: string
+  highlight: string
+  discount: string
+  discountText: string
+  buttonText: string
+  buttonLink: string
+  background: string
+  image: string
+  decorativeElements: Array<{
+    top?: string
+    bottom?: string
+    left: string
+    size: string
+    color: string
+    opacity: string
+  }>
+}
+
+// Default banner slides as fallback
+const defaultBannerSlides: BannerSlide[] = [
   {
     id: 1,
     title: "PRECISION AND QUALITY",
@@ -24,52 +60,70 @@ const bannerSlides = [
       { top: "32", left: "60", size: "8", color: "blue-200", opacity: "40" },
     ],
   },
-  {
-    id: 2,
-    title: "PRECISION AND QUALITY",
-    mainText: "Survey Tools",
-    highlight: "Industry Leading",
-    discount: "25%",
-    discountText: "Save up to",
-    buttonText: "Shop now",
-    buttonLink: "/shop",
-    background: "bg-gradient-to-r from-green-50 to-blue-50",
-    image: "/placeholder.svg?height=300&width=300&text=Advanced+Surveying+Equipment",
-    decorativeElements: [
-      { top: "15", left: "35", size: "14", color: "green-200", opacity: "35" },
-      { bottom: "25", left: "25", size: "10", color: "green-200", opacity: "25" },
-      { top: "28", left: "55", size: "6", color: "green-200", opacity: "45" },
-    ],
-  },
-  {
-    id: 3,
-    title: "PRECISION AND QUALITY",
-    mainText: "GNSS Receivers",
-    highlight: "High Accuracy",
-    discount: "20%",
-    discountText: "Save up to",
-    buttonText: "Shop now",
-    buttonLink: "/shop",
-    background: "bg-gradient-to-r from-orange-50 to-red-50",
-    image: "/placeholder.svg?height=300&width=300&text=Premium+GNSS+Technology",
-    decorativeElements: [
-      { top: "8", left: "45", size: "18", color: "orange-200", opacity: "25" },
-      { bottom: "30", left: "15", size: "14", color: "orange-200", opacity: "35" },
-      { top: "35", left: "65", size: "10", color: "orange-200", opacity: "30" },
-    ],
-  },
 ]
 
 export default function HeroBanner() {
   const [currentSlide, setCurrentSlide] = useState(0)
+  const [bannerSlides, setBannerSlides] = useState<BannerSlide[]>(defaultBannerSlides)
+  const [loading, setLoading] = useState(true)
+
+  // Function to transform database banner to slide format
+  const transformBannerData = (banners: BannerData[]): BannerSlide[] => {
+    return banners.map((banner, index) => ({
+      id: banner.id,
+      title: banner.title.toUpperCase(),
+      mainText: banner.subtitle,
+      highlight: banner.description,
+      discount: banner.discount_percentage > 0 ? `${banner.discount_percentage}%` : "0%",
+      discountText: banner.discount_percentage > 0 ? "Save up to" : "Special",
+      buttonText: banner.button_text,
+      buttonLink: banner.button_link,
+      background: `bg-gradient-to-r ${banner.background_color}`,
+      image: banner.image_url || "/placeholder.svg?height=300&width=300&text=Banner+Image",
+      decorativeElements: [
+        { top: "10", left: "40", size: "16", color: getColorFromIndex(index, "200"), opacity: "30" },
+        { bottom: "20", left: "20", size: "12", color: getColorFromIndex(index, "200"), opacity: "30" },
+        { top: "32", left: "60", size: "8", color: getColorFromIndex(index, "200"), opacity: "40" },
+      ],
+    }))
+  }
+
+  // Helper function to get colors based on index
+  const getColorFromIndex = (index: number, shade: string) => {
+    const colors = ["blue", "green", "orange", "purple", "pink", "indigo"]
+    return `${colors[index % colors.length]}-${shade}`
+  }
+
+  // Fetch banners from API
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch('/api/banners')
+        if (response.ok) {
+          const banners: BannerData[] = await response.json()
+          if (banners.length > 0) {
+            setBannerSlides(transformBannerData(banners))
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching banners:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBanners()
+  }, [])
 
   useEffect(() => {
+    if (bannerSlides.length === 0) return
+    
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % bannerSlides.length)
     }, 5000)
 
     return () => clearInterval(timer)
-  }, [])
+  }, [bannerSlides.length])
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % bannerSlides.length)
@@ -77,6 +131,27 @@ export default function HeroBanner() {
 
   const prevSlide = () => {
     setCurrentSlide((prev) => (prev - 1 + bannerSlides.length) % bannerSlides.length)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-[400px] md:min-h-[500px] flex items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading banners...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (bannerSlides.length === 0) {
+    return (
+      <div className="min-h-[400px] md:min-h-[500px] flex items-center justify-center bg-gradient-to-r from-gray-50 to-gray-100">
+        <div className="text-center">
+          <p className="text-gray-600">No banners available</p>
+        </div>
+      </div>
+    )
   }
 
   const currentBanner = bannerSlides[currentSlide]

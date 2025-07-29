@@ -12,11 +12,33 @@ import { useProducts } from "@/hooks/useProducts"
 import { useCategories } from "@/hooks/useCategories"
 import { Product } from "@/lib/types"
 
+// Throttle function to prevent excessive scroll events
+function throttle<T extends (...args: any[]) => any>(func: T, delay: number): (...args: Parameters<T>) => void {
+  let timeoutId: NodeJS.Timeout | null = null
+  let lastCallTime = 0
+  
+  return (...args: Parameters<T>) => {
+    const now = Date.now()
+    
+    if (now - lastCallTime >= delay) {
+      lastCallTime = now
+      func.apply(null, args)
+    } else if (timeoutId === null) {
+      timeoutId = setTimeout(() => {
+        timeoutId = null
+        lastCallTime = Date.now()
+        func.apply(null, args)
+      }, delay - (now - lastCallTime))
+    }
+  }
+}
+
 // Helper function untuk konversi Product ke format ProductCard
 function convertToProductCardFormat(product: Product) {
   return {
     id: product.id,
     name: product.name,
+    slug: product.slug,
     price: product.price,
     originalPrice: product.compare_price || undefined,
     image: product.images[0] || "/placeholder.svg",
@@ -54,18 +76,30 @@ export default function ShopPage() {
 
   // Update allProducts ketika ada data baru
   useEffect(() => {
-    if (products) {
-      if (page === 1) {
-        setAllProducts(products)
-      } else {
-        setAllProducts(prev => [...prev, ...products])
+    try {
+      if (products && products.length > 0) {
+        if (page === 1) {
+          setAllProducts(products)
+        } else {
+          setAllProducts(prev => {
+            // Prevent duplicates using Set for better performance
+            const existingIds = new Set(prev.map(p => p.id))
+            const newProducts = products.filter(p => !existingIds.has(p.id))
+            return newProducts.length > 0 ? [...prev, ...newProducts] : prev
+          })
+        }
       }
+    } catch (error) {
+      console.warn('Error updating products:', error)
+    } finally {
       setIsLoadingMore(false)
     }
   }, [products, page])
 
-  // Infinite scroll functionality
+  // Infinite scroll functionality with improved dependency management
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handleScroll = () => {
       if (
         window.innerHeight + window.scrollY >= document.body.offsetHeight - 1000 &&
@@ -79,9 +113,10 @@ export default function ShopPage() {
       }
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [isLoading, isLoadingMore, pagination, page])
+    const throttledHandleScroll = throttle(handleScroll, 200)
+    window.addEventListener('scroll', throttledHandleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', throttledHandleScroll)
+  }, [isLoading, isLoadingMore, pagination?.pages, page]) // More specific pagination dependency
 
   const handleQuickView = (productId: number) => {
     setQuickViewProduct(productId)
@@ -112,7 +147,7 @@ export default function ShopPage() {
       setIsLoadingMore(true)
       setPage(prev => prev + 1)
     }
-  }, [pagination, page, isLoadingMore, isLoading])
+  }, [pagination?.pages, page, isLoadingMore, isLoading]) // More specific dependencies
 
   const selectedProduct = allProducts.find((p) => p.id === quickViewProduct)
   const hasMorePages = pagination && page < pagination.pages

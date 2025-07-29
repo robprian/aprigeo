@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import Header from "@/app/components/storefront/Header"
-import Footer from "@/app/components/storefront/Footer"
+import { Toaster } from "@/components/ui/toaster"
+import RootLayoutWrapper from "./components/RootLayoutWrapper"
 
 export const metadata: Metadata = {
   title: "CV. Aprinia Geosat Solusindo - Survey Equipment & GPS Tools",
@@ -20,11 +20,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <main className="flex-grow">{children}</main>
-            <Footer />
-          </div>
+          <RootLayoutWrapper>
+            {children}
+          </RootLayoutWrapper>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -22,6 +22,7 @@ export interface Product {
     height: number
   }
   images: string[]
+  image?: string // For backward compatibility
   tags: string[]
   meta_title?: string
   meta_description?: string
@@ -60,12 +61,6 @@ export interface Brand {
   slug: string
   description?: string
   logo_url?: string
-  website_url?: string
-  country?: string
-  phone?: string
-  email?: string
-  rating?: number
-  featured?: boolean
   is_active: boolean
   created_at: string
   updated_at: string

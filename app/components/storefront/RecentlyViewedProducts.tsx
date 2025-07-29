@@ -64,13 +64,7 @@ export default function RecentlyViewedProducts({
   const handleAddToCart = (product: any, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    addToCart({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: 1,
-    })
+    addToCart(product, 1)
   }
 
   const handleAddToWishlist = (product: any, e: React.MouseEvent) => {
@@ -171,7 +165,7 @@ export default function RecentlyViewedProducts({
                 <X className="w-3 h-3" />
               </Button>
 
-              <Link href={`/product/${product.id}`} className={viewMode === "list" ? "flex items-center w-full" : ""}>
+              <Link href={`/product/${product.slug || product.id}`} className={viewMode === "list" ? "flex items-center w-full" : ""}>
                 {/* Product Image */}
                 <div
                   className={`relative overflow-hidden bg-gray-50 ${

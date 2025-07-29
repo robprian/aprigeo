@@ -13,6 +13,7 @@ import { useDebounce } from "@/hooks/use-debounce"
 interface Product {
   id: number
   name: string
+  slug?: string
   price: number
   image?: string
   category?: string
@@ -146,7 +147,7 @@ export default function SearchWithSuggestions({
               {suggestions.map((product) => (
                 <Link
                   key={product.id}
-                  href={`/product/${product.id}`}
+                  href={`/product/${product.slug || product.id}`}
                   className="flex items-center gap-3 p-3 hover:bg-gray-50 border-b border-gray-50 last:border-b-0"
                   onClick={handleSuggestionClick}
                 >

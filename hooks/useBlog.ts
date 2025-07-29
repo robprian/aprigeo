@@ -1,4 +1,5 @@
 import useSWR from 'swr'
+import { useEffect } from 'react'
 import { BlogPost, PaginatedResponse } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -32,6 +33,30 @@ export function useBlog(options: UseBlogOptions = {}) {
       dedupingInterval: 300000, // 5 minutes
     }
   )
+
+  // Listen for admin sync events to invalidate data
+  useEffect(() => {
+    const handleAdminSync = (event: CustomEvent) => {
+      const { type } = event.detail
+      if (type === 'blog') {
+        mutate() // Revalidate data when blog posts are modified in admin
+      }
+    }
+
+    const handleDataInvalidate = () => {
+      mutate() // Force refresh when data invalidation is triggered
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('admin-sync', handleAdminSync as EventListener)
+      window.addEventListener('data-invalidate', handleDataInvalidate)
+      
+      return () => {
+        window.removeEventListener('admin-sync', handleAdminSync as EventListener)
+        window.removeEventListener('data-invalidate', handleDataInvalidate)
+      }
+    }
+  }, [mutate])
 
   return {
     posts: data?.data || [],

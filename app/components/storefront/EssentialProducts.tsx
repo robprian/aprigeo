@@ -84,6 +84,7 @@ function convertToProductCardFormat(product: Product) {
   return {
     id: product.id,
     name: product.name,
+    slug: product.slug,
     price: product.price,
     originalPrice: product.compare_price || undefined,
     image: product.images[0] || "/placeholder.svg",

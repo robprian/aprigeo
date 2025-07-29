@@ -50,9 +50,9 @@ export default function BrowseCategoriesMenu() {
           
           return (
             <div key={category.id} className="border-b border-gray-100">
-              <div
-                className="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer"
-                onClick={() => setSelectedCategory(isSelected ? null : category.id)}
+              <Link
+                href={`/categories/${category.slug}`}
+                className="flex items-center justify-between p-4 hover:bg-gray-50 group"
               >
                 <div className="flex items-center space-x-3">
                   <Image
@@ -63,23 +63,19 @@ export default function BrowseCategoriesMenu() {
                     className="rounded-lg"
                   />
                   <div>
-                    <span className="font-medium text-gray-900">{category.name}</span>
+                    <span className="font-medium text-gray-900 group-hover:text-blue-600">{category.name}</span>
                     <p className="text-sm text-gray-500">{category.products_count || 0} products</p>
                   </div>
                 </div>
-                <ChevronRight 
-                  className={`w-5 h-5 text-gray-400 transition-transform ${
-                    isSelected ? 'rotate-90' : ''
-                  }`} 
-                />
-              </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600" />
+              </Link>
               
-              {isSelected && subCategories.length > 0 && (
+              {subCategories.length > 0 && (
                 <div className="bg-gray-50 pb-2">
                   {subCategories.map((subCategory) => (
                     <Link
                       key={subCategory.id}
-                      href={`/category/${subCategory.slug}`}
+                      href={`/categories/${subCategory.slug}`}
                       className="block px-4 py-2 pl-16 text-sm text-gray-600 hover:text-blue-600 hover:bg-gray-100"
                     >
                       {subCategory.name}

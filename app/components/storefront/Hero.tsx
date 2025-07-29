@@ -6,48 +6,122 @@ import Image from "next/image"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 
-const heroSlides = [
+interface BannerData {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  image_url: string
+  button_text: string
+  button_link: string
+  discount_percentage: number
+  background_color: string
+  text_color: string
+  position_order: number
+}
+
+interface HeroSlide {
+  id: number
+  title: string
+  subtitle: string
+  tagline: string
+  discount: string
+  image: string
+  buttonText: string
+  buttonLink: string
+  background: string
+}
+
+// Default slides as fallback (GPS/Survey themed)
+const defaultHeroSlides: HeroSlide[] = [
   {
     id: 1,
-    title: "Discover Real",
-    subtitle: "Organic Flavors",
-    tagline: "PURE AND NATURE",
-    discount: "30%",
-    image: "/placeholder.svg?height=400&width=800&text=Fresh+Organic+Vegetables",
+    title: "Precision GPS",
+    subtitle: "Professional Tools",
+    tagline: "SURVEY GRADE ACCURACY",
+    discount: "15%",
+    image: "/placeholder.svg?height=400&width=800&text=GPS+Survey+Equipment",
+    buttonText: "Shop Now",
+    buttonLink: "/products",
+    background: "from-orange-50 to-orange-100",
   },
   {
     id: 2,
-    title: "Farm Fresh",
-    subtitle: "Vegetables & Fruits",
-    tagline: "100% ORGANIC",
-    discount: "25%",
-    image: "/placeholder.svg?height=400&width=800&text=Farm+Fresh+Selection",
+    title: "Modern Survey",
+    subtitle: "Technology Solutions",
+    tagline: "INDUSTRY LEADING",
+    discount: "20%",
+    image: "/placeholder.svg?height=400&width=800&text=Survey+Technology",
+    buttonText: "Explore",
+    buttonLink: "/shop",
+    background: "from-blue-50 to-blue-100",
   },
   {
     id: 3,
-    title: "Natural Products",
-    subtitle: "Healthy Living",
-    tagline: "ECO FRIENDLY",
-    discount: "20%",
-    image: "/placeholder.svg?height=400&width=800&text=Natural+Products",
+    title: "Professional",
+    subtitle: "GPS Equipment",
+    tagline: "TRUSTED BRANDS",
+    discount: "0%",
+    image: "/placeholder.svg?height=400&width=800&text=Professional+GPS",
+    buttonText: "View Catalog",
+    buttonLink: "/brands",
+    background: "from-green-50 to-green-100",
   },
 ]
 
 export default function Hero() {
   const [activeSlide, setActiveSlide] = useState(0)
   const [autoplay, setAutoplay] = useState(true)
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(defaultHeroSlides)
+  const [loading, setLoading] = useState(true)
+
+  // Transform database banner to hero slide format
+  const transformBannerData = (banners: BannerData[]): HeroSlide[] => {
+    return banners.map((banner) => ({
+      id: banner.id,
+      title: banner.subtitle.split(' ').slice(0, 2).join(' '), // First 2 words
+      subtitle: banner.subtitle.split(' ').slice(2).join(' ') || banner.description.split(' ').slice(0, 2).join(' '), // Remaining words or description
+      tagline: banner.title.toUpperCase(),
+      discount: banner.discount_percentage > 0 ? `${banner.discount_percentage}%` : "0%",
+      image: banner.image_url || "/placeholder.svg?height=400&width=800&text=GPS+Equipment",
+      buttonText: banner.button_text,
+      buttonLink: banner.button_link,
+      background: banner.background_color,
+    }))
+  }
+
+  // Fetch banners from API
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        const response = await fetch('/api/banners')
+        if (response.ok) {
+          const banners: BannerData[] = await response.json()
+          if (banners.length > 0) {
+            setHeroSlides(transformBannerData(banners))
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching banners:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchBanners()
+  }, [])
 
   useEffect(() => {
     let interval: NodeJS.Timeout
 
-    if (autoplay) {
+    if (autoplay && heroSlides.length > 0) {
       interval = setInterval(() => {
         setActiveSlide((prev) => (prev + 1) % heroSlides.length)
       }, 5000)
     }
 
     return () => clearInterval(interval)
-  }, [autoplay])
+  }, [autoplay, heroSlides.length])
 
   const goToSlide = (index: number) => {
     setActiveSlide(index)
@@ -73,7 +147,7 @@ export default function Hero() {
           {heroSlides.map((slide, index) => (
             <div
               key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-500 ${
+              className={`absolute inset-0 transition-opacity duration-500 bg-gradient-to-r ${slide.background} ${
                 index === activeSlide ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
             >
@@ -85,11 +159,15 @@ export default function Hero() {
                     <br />
                     <span className="text-green-600">{slide.subtitle}</span>
                   </h1>
-                  <div className="flex items-center mb-6">
-                    <span className="text-6xl font-bold text-orange-500">{slide.discount.split("%")[0]}</span>
-                    <span className="text-2xl font-bold text-orange-500 ml-1">%</span>
-                  </div>
-                  <Button className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-sm">Shop now</Button>
+                  {slide.discount !== "0%" && (
+                    <div className="flex items-center mb-6">
+                      <span className="text-6xl font-bold text-orange-500">{slide.discount.split("%")[0]}</span>
+                      <span className="text-2xl font-bold text-orange-500 ml-1">%</span>
+                    </div>
+                  )}
+                  <Button asChild className="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-sm">
+                    <Link href={slide.buttonLink}>{slide.buttonText}</Link>
+                  </Button>
                 </div>
               </div>
               <div className="relative h-80 lg:h-96">

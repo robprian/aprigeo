@@ -42,36 +42,36 @@ export default function ProductHoverActions({
   return (
     <div
       className={cn(
-        "absolute inset-0 bg-black bg-opacity-0 opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center",
+        "absolute inset-0 bg-black bg-opacity-0 opacity-0 group-hover:bg-opacity-10 group-hover:opacity-100 transition-all duration-200 flex items-center justify-center",
         className,
       )}
     >
       {/* Vertical Icons */}
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
+      <div className="absolute right-2 top-2 flex flex-col gap-2">
         <button
           className={cn(
-            "w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:bg-gray-100",
+            "w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:bg-gray-100 hover:scale-110",
             isWishlisted ? "text-red-500" : "text-gray-600",
           )}
           onClick={onAddToWishlist}
-          aria-label="Add to wishlist"
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
         >
           <Heart className={cn("w-4 h-4", isWishlisted ? "fill-current" : "")} />
         </button>
 
         <button
           className={cn(
-            "w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center transition-all hover:bg-gray-100",
+            "w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center transition-all duration-200 hover:bg-gray-100 hover:scale-110",
             isCompared ? "text-blue-500" : "text-gray-600",
           )}
           onClick={onCompare}
-          aria-label="Compare product"
+          aria-label={isCompared ? "Remove from compare" : "Add to compare"}
         >
           <BarChart2 className="w-4 h-4" />
         </button>
 
         <button
-          className="w-9 h-9 bg-white rounded-full shadow-md flex items-center justify-center text-gray-600 transition-all hover:bg-gray-100"
+          className="w-9 h-9 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-600 transition-all duration-200 hover:bg-gray-100 hover:scale-110"
           onClick={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -87,7 +87,7 @@ export default function ProductHoverActions({
       <div className="absolute bottom-0 left-0 right-0 mb-4 flex justify-center">
         <Button
           className={cn(
-            "bg-green-500 hover:bg-green-600 text-white rounded-full shadow-md px-5 py-2 flex items-center gap-2 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300",
+            "bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg px-6 py-2 flex items-center gap-2 transform translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 hover:scale-105",
             !product.inStock && "bg-gray-400 hover:bg-gray-400 cursor-not-allowed",
           )}
           disabled={!product.inStock}
@@ -95,7 +95,9 @@ export default function ProductHoverActions({
           aria-label="Add to cart"
         >
           <ShoppingCart className="w-4 h-4" />
-          <span>Add to Cart</span>
+          <span className="text-sm font-medium">
+            {product.inStock ? "Add to Cart" : "Out of Stock"}
+          </span>
         </Button>
       </div>
     </div>

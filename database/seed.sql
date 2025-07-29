@@ -95,3 +95,17 @@ INSERT INTO blog_posts (title, slug, content, excerpt, featured_image, author_id
 ('Top 10 GPS Devices for Professional Surveying', 'top-10-gps-devices-professional-surveying', 'Comprehensive guide to the best GPS devices for professional surveying work...', 'Discover the top GPS devices trusted by professional surveyors worldwide', '/placeholder.svg?height=300&width=500', 1, 'published', NOW() - INTERVAL '2 days'),
 ('Understanding GNSS Technology in Modern Surveying', 'understanding-gnss-technology-modern-surveying', 'Deep dive into GNSS technology and its applications in surveying...', 'Learn about the latest GNSS technology and how it revolutionizes surveying', '/placeholder.svg?height=300&width=500', 1, 'published', NOW() - INTERVAL '5 days'),
 ('Best Practices for Total Station Setup', 'best-practices-total-station-setup', 'Essential tips for proper total station setup and calibration...', 'Master the art of total station setup with these professional tips', '/placeholder.svg?height=300&width=500', 1, 'published', NOW() - INTERVAL '10 days');
+
+-- Insert Customer Menu Items
+INSERT INTO customer_menu_items (title, url, icon, description, badge, is_active, order_index) VALUES
+('Dashboard', '/account', 'user', 'Account overview and summary', NULL, true, 1),
+('My Orders', '/account/orders', 'shopping-bag', 'View and track your orders', '3', true, 2),
+('Wishlist', '/account/wishlist', 'heart', 'Your saved products', NULL, true, 3),
+('Addresses', '/account/addresses', 'map-pin', 'Manage shipping addresses', NULL, true, 4),
+('Payment Methods', '/account/payment', 'credit-card', 'Manage payment methods', NULL, true, 5),
+('Order History', '/account/orders/history', 'clock', 'View past orders', NULL, true, 6),
+('Reviews & Ratings', '/account/reviews', 'star', 'Your product reviews', NULL, true, 7),
+('Notifications', '/account/notifications', 'bell', 'Manage notifications', '2', true, 8),
+('Security', '/account/security', 'shield', 'Password and security settings', NULL, true, 9),
+('Settings', '/account/settings', 'settings', 'Account preferences', NULL, true, 10),
+('Support', '/account/support', 'help-circle', 'Get help and support', NULL, true, 11);

@@ -39,34 +39,35 @@ interface AdminSidebarProps {
   onToggleCollapse: () => void
 }
 
+// Consolidated menu structure
 const catalogItems = [
   { icon: Package, label: "Products", href: "/admin/catalog/products" },
   { icon: Tag, label: "Categories", href: "/admin/catalog/categories" },
   { icon: Building2, label: "Brands", href: "/admin/catalog/brands" },
-  { icon: FolderOpen, label: "File Manager", href: "/admin/catalog/files" },
 ]
 
 const salesItems = [
-  { icon: Users, label: "Customers", href: "/admin/sales/customers" },
   { icon: ShoppingCart, label: "Orders", href: "/admin/sales/orders" },
-  { icon: UserCheck, label: "Customer Groups", href: "/admin/sales/customer-groups" },
-  { icon: CreditCard, label: "Payment Methods", href: "/admin/sales/payment-methods" },
+  { icon: Users, label: "Customers", href: "/admin/sales/customers" },
 ]
 
 const marketingItems = [
-  { icon: Mail, label: "Email Blast", href: "/admin/marketing/email" },
-  { icon: MessageCircle, label: "WhatsApp Blast", href: "/admin/marketing/whatsapp" },
-  { icon: Search, label: "SEO Tools", href: "/admin/marketing/seo-tools" },
-  { icon: ImageIcon, label: "Banner Management", href: "/admin/marketing/banners" },
+  { icon: Megaphone, label: "Overview", href: "/admin/marketing" },
+  { icon: ImageIcon, label: "Promotional Banners", href: "/admin/marketing/promotional-banners" },
+  { icon: Tag, label: "Campaigns", href: "/admin/marketing/campaigns" },
+  { icon: CreditCard, label: "Coupons", href: "/admin/marketing/coupons" },
+  { icon: Mail, label: "Email Marketing", href: "/admin/marketing/email" },
 ]
 
-const contentItems = [{ icon: FileText, label: "Blog Posts", href: "/admin/content/blog" }]
-
-const reportsItems = [{ icon: TrendingUp, label: "Analytics", href: "/admin/reports" }]
+const contentItems = [
+  { icon: FileText, label: "Pages", href: "/admin/content/pages" },
+  { icon: FileText, label: "Blog Posts", href: "/admin/content/blog" },
+  { icon: Search, label: "SEO Tools", href: "/admin/content/seo-tools" },
+]
 
 const settingsItems = [
+  { icon: TrendingUp, label: "Analytics", href: "/admin/reports" },
   { icon: Wrench, label: "System Settings", href: "/admin/settings/system" },
-  { icon: Bot, label: "AI Configuration", href: "/admin/settings/ai" },
 ]
 
 export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: AdminSidebarProps) {
@@ -75,7 +76,6 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
   const [salesOpen, setSalesOpen] = useState(false)
   const [marketingOpen, setMarketingOpen] = useState(false)
   const [contentOpen, setContentOpen] = useState(false)
-  const [reportsOpen, setReportsOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
   // Auto-open sections based on current path
@@ -84,8 +84,7 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
     if (pathname.startsWith("/admin/sales/")) setSalesOpen(true)
     if (pathname.startsWith("/admin/marketing/")) setMarketingOpen(true)
     if (pathname.startsWith("/admin/content/")) setContentOpen(true)
-    if (pathname.startsWith("/admin/reports")) setReportsOpen(true)
-    if (pathname.startsWith("/admin/settings/")) setSettingsOpen(true)
+    if (pathname.startsWith("/admin/reports") || pathname.startsWith("/admin/settings/")) setSettingsOpen(true)
   }, [pathname])
 
   const isActiveSection = (items: any[]) => {
@@ -242,14 +241,9 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
               {renderSectionItems(contentItems, "Content", contentOpen, setContentOpen, FileText)}
             </div>
 
-            {/* Reports */}
+            {/* Settings & Reports */}
             <div className="pt-2">
-              {renderSectionItems(reportsItems, "Reports", reportsOpen, setReportsOpen, TrendingUp)}
-            </div>
-
-            {/* Settings */}
-            <div className="pt-2">
-              {renderSectionItems(settingsItems, "Settings", settingsOpen, setSettingsOpen, Settings)}
+              {renderSectionItems(settingsItems, "Settings & Reports", settingsOpen, setSettingsOpen, Settings)}
             </div>
           </div>
 

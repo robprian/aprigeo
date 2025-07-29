@@ -30,9 +30,6 @@ export async function GET(request: NextRequest) {
     
     // Build WHERE clause
     let whereClause = 'WHERE b.is_active = true'
-    if (featured) {
-      whereClause += ' AND b.featured = true'
-    }
     
     // Build query with optional product count
     let selectClause = `
@@ -41,12 +38,6 @@ export async function GET(request: NextRequest) {
       b.slug,
       b.description,
       b.logo_url,
-      b.website_url,
-      b.country,
-      b.phone,
-      b.email,
-      b.rating,
-      b.featured,
       b.is_active,
       b.created_at,
       b.updated_at
@@ -64,7 +55,7 @@ export async function GET(request: NextRequest) {
       ${includeCount ? 'LEFT JOIN products p ON b.id = p.brand_id AND p.is_active = true' : ''}
       ${whereClause}
       ${includeCount ? 'GROUP BY b.id' : ''}
-      ORDER BY b.featured DESC, b.name ASC
+      ORDER BY b.name ASC
       LIMIT $1 OFFSET $2
     `
     
@@ -76,12 +67,6 @@ export async function GET(request: NextRequest) {
       slug: row.slug,
       description: row.description,
       logo_url: row.logo_url,
-      website_url: row.website_url,
-      country: row.country,
-      phone: row.phone,
-      email: row.email,
-      rating: row.rating,
-      featured: row.featured,
       is_active: row.is_active,
       created_at: row.created_at,
       updated_at: row.updated_at,

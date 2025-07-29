@@ -265,7 +265,7 @@ export default function ProductQuickView({ product, isOpen, onClose }: ProductQu
               {/* View Full Details Link */}
               <div className="pt-4 border-t">
                 <Link
-                  href={`/product/${product.id}`}
+                  href={`/product/${product.slug || product.id}`}
                   className="text-green-500 hover:text-green-600 font-medium flex items-center"
                 >
                   View full details

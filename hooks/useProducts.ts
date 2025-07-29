@@ -1,4 +1,5 @@
 import useSWR from 'swr'
+import { useEffect } from 'react'
 import { Product, PaginatedResponse } from '@/lib/types'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
@@ -44,6 +45,30 @@ export function useProducts(options: UseProductsOptions = {}) {
       dedupingInterval: 60000, // 1 minute
     }
   )
+
+  // Listen for admin sync events to invalidate data
+  useEffect(() => {
+    const handleAdminSync = (event: CustomEvent) => {
+      const { type } = event.detail
+      if (type === 'product') {
+        mutate() // Revalidate data when products are modified in admin
+      }
+    }
+
+    const handleDataInvalidate = () => {
+      mutate() // Force refresh when data invalidation is triggered
+    }
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('admin-sync', handleAdminSync as EventListener)
+      window.addEventListener('data-invalidate', handleDataInvalidate)
+      
+      return () => {
+        window.removeEventListener('admin-sync', handleAdminSync as EventListener)
+        window.removeEventListener('data-invalidate', handleDataInvalidate)
+      }
+    }
+  }, [mutate])
 
   return {
     products: data?.data || [],

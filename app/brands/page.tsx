@@ -94,7 +94,7 @@ export default function BrandsPage() {
                   <p className="text-sm text-gray-600 mb-4">{brand.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-500">{brand.products_count || 0} products</span>
-                    <Link href={`/brands/${brand.id}`}>
+                    <Link href={`/brands/${brand.slug}`}>
                       <Button size="sm" variant="outline">
                         View Store
                       </Button>
@@ -188,35 +188,11 @@ export default function BrandsPage() {
                   <p className="text-sm text-gray-600 mb-4">{brand.description}</p>
 
                   <div className="space-y-2 mb-4">
-                    {brand.country && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <MapPin className="w-4 h-4" />
-                        <span>{brand.country}</span>
-                      </div>
-                    )}
-                    {brand.phone && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Phone className="w-4 h-4" />
-                        <span>{brand.phone}</span>
-                      </div>
-                    )}
-                    {brand.email && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Mail className="w-4 h-4" />
-                        <span>{brand.email}</span>
-                      </div>
-                    )}
-                    {brand.website_url && (
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Globe className="w-4 h-4" />
-                        <span>{brand.website_url}</span>
-                      </div>
-                    )}
+                    <span className="text-sm text-gray-500">{brand.products_count || 0} products</span>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">{brand.products_count || 0} products</span>
-                    <Link href={`/brands/${brand.id}`}>
+                    <Link href={`/brands/${brand.slug}`}>
                       <Button size="sm">View Store</Button>
                     </Link>
                   </div>

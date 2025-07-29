@@ -47,8 +47,24 @@ CREATE TABLE customer_profiles (
     total_orders INT DEFAULT 0,
     total_spent DECIMAL(12,2) DEFAULT 0.00,
     last_order_date TIMESTAMP NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE SET NULL
+    FOREIGN KEY (banner_id) REFERENCES banners(id) ON DELETE CASCADE
+);
+
+-- Customer Menu Items
+CREATE TABLE customer_menu_items (
+    id BIGSERIAL PRIMARY KEY,
+    title VARCHAR(100) NOT NULL,
+    url VARCHAR(255) NOT NULL,
+    icon VARCHAR(50) NOT NULL,
+    description TEXT,
+    badge VARCHAR(20),
+    is_active BOOLEAN DEFAULT TRUE,
+    order_index INT DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create triggers for updated_at timestamps
 );
 
 -- Addresses
@@ -268,3 +284,4 @@ CREATE TRIGGER update_product_reviews_updated_at BEFORE UPDATE ON product_review
 CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_blog_posts_updated_at BEFORE UPDATE ON blog_posts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_system_settings_updated_at BEFORE UPDATE ON system_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_customer_menu_items_updated_at BEFORE UPDATE ON customer_menu_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -44,6 +44,7 @@ export default function BestSelling() {
   const convertedProducts = filteredProducts.map(product => ({
     id: product.id,
     name: product.name,
+    slug: product.slug,
     price: product.price,
     originalPrice: product.compare_price,
     image: product.images[0] || "/placeholder.svg?height=200&width=200",

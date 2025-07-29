@@ -7,9 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, Wand2, Edit, Trash2, Eye, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useStore } from "@/lib/store"
+import { useAdminSync } from "@/lib/admin-sync"
 import { formatCurrency } from "@/lib/currency"
 import { motion } from "framer-motion"
 import PageTransition from "@/components/ui/page-transition"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function ProductsPage() {
   const { products, categories, brands, addProduct, updateProduct, deleteProduct, generateSEO } = useStore()
+  const { syncProduct, clearCaches } = useAdminSync()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -87,24 +90,56 @@ export default function ProductsPage() {
     })
   }
 
-  const handleAddProduct = () => {
-    addProduct({
-      ...formData,
-      seo_optimized: !!(formData.meta_title && formData.meta_description),
-    })
-    resetForm()
-    setIsAddDialogOpen(false)
-  }
-
-  const handleEditProduct = () => {
-    if (editingProduct) {
-      updateProduct(editingProduct.id, {
+  const handleAddProduct = async () => {
+    try {
+      const productData = {
         ...formData,
         seo_optimized: !!(formData.meta_title && formData.meta_description),
-      })
-      setIsEditDialogOpen(false)
-      setEditingProduct(null)
-      resetForm()
+      }
+      
+      // Sync with database and store
+      const success = await syncProduct('create', productData)
+      
+      if (success) {
+        toast.success('Product created successfully and synced to frontend!')
+        resetForm()
+        setIsAddDialogOpen(false)
+        // Clear caches to ensure fresh data on frontend
+        await clearCaches()
+      } else {
+        toast.error('Failed to create product')
+      }
+    } catch (error) {
+      console.error('Product creation error:', error)
+      toast.error('Failed to create product')
+    }
+  }
+
+  const handleEditProduct = async () => {
+    if (editingProduct) {
+      try {
+        const productData = {
+          ...formData,
+          seo_optimized: !!(formData.meta_title && formData.meta_description),
+        }
+        
+        // Sync with database and store
+        const success = await syncProduct('update', productData, editingProduct.id)
+        
+        if (success) {
+          toast.success('Product updated successfully and synced to frontend!')
+          setIsEditDialogOpen(false)
+          setEditingProduct(null)
+          resetForm()
+          // Clear caches to ensure fresh data on frontend
+          await clearCaches()
+        } else {
+          toast.error('Failed to update product')
+        }
+      } catch (error) {
+        console.error('Product update error:', error)
+        toast.error('Failed to update product')
+      }
     }
   }
 
@@ -131,9 +166,23 @@ export default function ProductsPage() {
     setIsViewDialogOpen(true)
   }
 
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = async (id: number) => {
     if (confirm("Are you sure you want to delete this product?")) {
-      deleteProduct(id)
+      try {
+        // Sync with database and store
+        const success = await syncProduct('delete', null, id)
+        
+        if (success) {
+          toast.success('Product deleted successfully and synced to frontend!')
+          // Clear caches to ensure fresh data on frontend
+          await clearCaches()
+        } else {
+          toast.error('Failed to delete product')
+        }
+      } catch (error) {
+        console.error('Product deletion error:', error)
+        toast.error('Failed to delete product')
+      }
     }
   }
 

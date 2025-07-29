@@ -1,202 +1,254 @@
-import type { Metadata } from "next"
+"use client"
+
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, Search, Grid, List } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
-export const metadata: Metadata = {
-  title: "Categories | GeoTech Store",
-  description: "Browse all product categories for GPS and survey equipment",
+interface Category {
+  id: number
+  name: string
+  slug: string
+  description: string
+  image_url?: string
+  is_active: boolean
+  sort_order: number
+  products_count?: number
 }
 
-const categories = [
-  {
-    id: "gps-receivers",
-    name: "GPS Receivers",
-    description: "High-precision GPS and GNSS receivers for surveying and mapping",
-    image: "/placeholder.svg?height=300&width=300&text=GPS",
-    count: 24,
-  },
-  {
-    id: "total-stations",
-    name: "Total Stations",
-    description: "Advanced total stations for precise angle and distance measurements",
-    image: "/placeholder.svg?height=300&width=300&text=Total+Stations",
-    count: 18,
-  },
-  {
-    id: "theodolites",
-    name: "Theodolites",
-    description: "Optical instruments for measuring angles in horizontal and vertical planes",
-    image: "/placeholder.svg?height=300&width=300&text=Theodolites",
-    count: 12,
-  },
-  {
-    id: "laser-levels",
-    name: "Laser Levels",
-    description: "Self-leveling laser tools for accurate horizontal and vertical reference lines",
-    image: "/placeholder.svg?height=300&width=300&text=Laser+Levels",
-    count: 15,
-  },
-  {
-    id: "measuring-tools",
-    name: "Measuring Tools",
-    description: "Precision measuring instruments for construction and surveying",
-    image: "/placeholder.svg?height=300&width=300&text=Measuring+Tools",
-    count: 32,
-  },
-  {
-    id: "satellite-phones",
-    name: "Satellite Phones",
-    description: "Reliable communication devices for remote field operations",
-    image: "/placeholder.svg?height=300&width=300&text=Satellite+Phones",
-    count: 8,
-  },
-  {
-    id: "drones",
-    name: "Drones & UAVs",
-    description: "Unmanned aerial vehicles for aerial mapping and surveying",
-    image: "/placeholder.svg?height=300&width=300&text=Drones",
-    count: 14,
-  },
-  {
-    id: "accessories",
-    name: "Accessories",
-    description: "Essential accessories for survey equipment and GPS devices",
-    image: "/placeholder.svg?height=300&width=300&text=Accessories",
-    count: 56,
-  },
-  {
-    id: "data-collectors",
-    name: "Data Collectors",
-    description: "Rugged field computers for data collection and management",
-    image: "/placeholder.svg?height=300&width=300&text=Data+Collectors",
-    count: 22,
-  },
-  {
-    id: "software",
-    name: "Software",
-    description: "Professional software solutions for surveying and mapping",
-    image: "/placeholder.svg?height=300&width=300&text=Software",
-    count: 19,
-  },
-  {
-    id: "training",
-    name: "Training & Certification",
-    description: "Educational resources and certification programs",
-    image: "/placeholder.svg?height=300&width=300&text=Training",
-    count: 7,
-  },
-  {
-    id: "rentals",
-    name: "Equipment Rentals",
-    description: "Rent professional survey equipment for your projects",
-    image: "/placeholder.svg?height=300&width=300&text=Rentals",
-    count: 31,
-  },
-]
-
 export default function CategoriesPage() {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="flex items-center text-sm text-gray-500 mb-6">
-        <Link href="/" className="hover:text-green-500">
-          Home
-        </Link>
-        <ChevronRight className="w-4 h-4 mx-2" />
-        <span className="font-medium text-gray-900">Categories</span>
-      </div>
+  const [categories, setCategories] = useState<Category[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filteredCategories, setFilteredCategories] = useState<Category[]>([])
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
-      <h1 className="text-3xl font-bold mb-2">Product Categories</h1>
-      <p className="text-gray-600 mb-8">Browse our complete range of GPS and survey equipment by category</p>
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories?include_count=true')
+        if (response.ok) {
+          const data = await response.json()
+          setCategories(data.data || [])
+          setFilteredCategories(data.data || [])
+        }
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-      {/* Categories Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {categories.map((category) => (
-          <Link
-            key={category.id}
-            href={`/category/${category.id}`}
-            className="group bg-white rounded-lg overflow-hidden border border-gray-200 transition-shadow hover:shadow-lg"
-          >
-            <div className="aspect-square relative overflow-hidden bg-gray-100">
-              <Image
-                src={category.image || "/placeholder.svg"}
-                alt={category.name}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <div className="p-4">
-              <h3 className="font-medium text-lg mb-1 group-hover:text-green-500">{category.name}</h3>
-              <p className="text-gray-600 text-sm mb-2 line-clamp-2">{category.description}</p>
-              <span className="text-sm text-gray-500">{category.count} products</span>
-            </div>
-          </Link>
-        ))}
-      </div>
+    fetchCategories()
+  }, [])
 
-      {/* Featured Categories */}
-      <div className="mt-12 mb-8">
-        <h2 className="text-2xl font-bold mb-6">Featured Categories</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="relative rounded-lg overflow-hidden h-64">
-            <Image
-              src="/placeholder.svg?height=400&width=800&text=GPS+Receivers"
-              alt="GPS Receivers"
-              fill
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-              <h3 className="text-white text-2xl font-bold mb-2">GPS Receivers</h3>
-              <p className="text-white/80 mb-4">Professional-grade GPS receivers for precise positioning</p>
-              <Link
-                href="/category/gps-receivers"
-                className="inline-flex items-center text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-md"
-              >
-                Shop Now <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
-            </div>
+  useEffect(() => {
+    const filtered = categories.filter(category =>
+      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      category.description.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredCategories(filtered)
+  }, [searchTerm, categories])
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-300 rounded w-1/3 mb-4"></div>
+          <div className="h-12 bg-gray-300 rounded mb-6"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="h-64 bg-gray-300 rounded-lg"></div>
+            ))}
           </div>
-          <div className="relative rounded-lg overflow-hidden h-64">
-            <Image
-              src="/placeholder.svg?height=400&width=800&text=Total+Stations"
-              alt="Total Stations"
-              fill
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-6">
-              <h3 className="text-white text-2xl font-bold mb-2">Total Stations</h3>
-              <p className="text-white/80 mb-4">Advanced total stations for precise measurements</p>
-              <Link
-                href="/category/total-stations"
-                className="inline-flex items-center text-white bg-green-500 hover:bg-green-600 px-4 py-2 rounded-md"
-              >
-                Shop Now <ChevronRight className="w-4 h-4 ml-1" />
-              </Link>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-green-600 text-white py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">
+              Product Categories
+            </h1>
+            <p className="text-xl opacity-90 mb-8">
+              Discover our comprehensive range of professional surveying and GPS equipment
+            </p>
+            
+            {/* Search Bar */}
+            <div className="max-w-md mx-auto relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <Input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white text-gray-900"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Popular Brands */}
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6">Popular Brands</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Link
-              key={i}
-              href={`/brand/brand-${i + 1}`}
-              className="bg-white border border-gray-200 rounded-lg p-4 flex items-center justify-center hover:shadow-md transition-shadow"
+      <div className="container mx-auto px-4 py-8">
+        {/* View Toggle and Stats */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              Browse Categories
+            </h2>
+            <p className="text-gray-600">
+              {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'} available
+            </p>
+          </div>
+          
+          <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
             >
-              <Image
-                src={`/placeholder.svg?height=60&width=120&text=Brand+${i + 1}`}
-                alt={`Brand ${i + 1}`}
-                width={120}
-                height={60}
-                className="max-h-12 w-auto"
-              />
-            </Link>
-          ))}
+              <Grid className="w-4 h-4 mr-2" />
+              Grid
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('list')}
+            >
+              <List className="w-4 h-4 mr-2" />
+              List
+            </Button>
+          </div>
+        </div>
+
+        {/* Categories Grid/List */}
+        {filteredCategories.length === 0 ? (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <Search className="w-16 h-16 mx-auto" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-600 mb-2">No categories found</h3>
+            <p className="text-gray-500">
+              Try adjusting your search terms or browse all available categories.
+            </p>
+          </div>
+        ) : (
+          <div className={
+            viewMode === 'grid' 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "space-y-4"
+          }>
+            {filteredCategories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/categories/${category.slug}`}
+                className={
+                  viewMode === 'grid'
+                    ? "group bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden"
+                    : "group bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 p-6 flex items-center space-x-6"
+                }
+              >
+                {viewMode === 'grid' ? (
+                  <>
+                    {/* Grid View */}
+                    <div className="aspect-square bg-gradient-to-br from-blue-100 to-green-100 relative overflow-hidden">
+                      <Image
+                        src={category.image_url || "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400"}
+                        alt={category.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors duration-300" />
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-white font-semibold text-lg mb-1 line-clamp-1">
+                          {category.name}
+                        </h3>
+                        {category.products_count !== undefined && (
+                          <p className="text-white/90 text-sm">
+                            {category.products_count} products
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="p-6">
+                      <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                        {category.name}
+                      </h3>
+                      <p className="text-gray-600 text-sm line-clamp-2 mb-4">
+                        {category.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        {category.products_count !== undefined && (
+                          <span className="text-sm text-gray-500">
+                            {category.products_count} products
+                          </span>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* List View */}
+                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-green-100 rounded-lg relative overflow-hidden flex-shrink-0">
+                      <Image
+                        src={category.image_url || "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400"}
+                        alt={category.name}
+                        fill
+                        className="object-cover"
+                        sizes="80px"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                            {category.name}
+                          </h3>
+                          <p className="text-gray-600 text-sm line-clamp-2 mb-2">
+                            {category.description}
+                          </p>
+                          {category.products_count !== undefined && (
+                            <span className="text-sm text-gray-500">
+                              {category.products_count} products available
+                            </span>
+                          )}
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all flex-shrink-0 ml-4" />
+                      </div>
+                    </div>
+                  </>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Call to Action */}
+        <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-lg p-8 mt-12 text-center">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">
+            Can't Find What You're Looking For?
+          </h3>
+          <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
+            Our team of surveying experts is here to help you find the perfect equipment for your specific needs. 
+            Contact us for personalized recommendations and professional advice.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button asChild size="lg">
+              <Link href="/contact">Contact Our Experts</Link>
+            </Button>
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/shop">Browse All Products</Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

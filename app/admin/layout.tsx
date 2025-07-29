@@ -20,6 +20,17 @@ export default function AdminLayout({
     setSidebarOpen(false)
   }, [pathname])
 
+  // Don't show sidebar and header for login page
+  const isLoginPage = pathname === '/admin/login'
+
+  if (isLoginPage) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {children}
+      </div>
+    )
+  }
+
   return (
     // Full screen admin layout that overrides any parent layout
     <div className="fixed inset-0 bg-gray-50 z-50">

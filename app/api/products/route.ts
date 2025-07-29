@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '12')
     const category = searchParams.get('category')
+    const brand = searchParams.get('brand')
     const featured = searchParams.get('featured')
     const search = searchParams.get('search')
     const sort = searchParams.get('sort') || 'created_at'
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit
     
     // Build cache key
-    const cacheKey = `products:${page}:${limit}:${category}:${featured}:${search}:${sort}:${order}`
+    const cacheKey = `products:${page}:${limit}:${category}:${brand}:${featured}:${search}:${sort}:${order}`
     
     // Try to get from cache first
     const cached = await getCache(cacheKey)
@@ -47,6 +48,12 @@ export async function GET(request: NextRequest) {
     if (category) {
       whereClause += ` AND c.slug = $${paramIndex}`
       queryParams.push(category)
+      paramIndex++
+    }
+    
+    if (brand) {
+      whereClause += ` AND b.slug = $${paramIndex}`
+      queryParams.push(brand)
       paramIndex++
     }
     
@@ -83,6 +90,7 @@ export async function GET(request: NextRequest) {
       SELECT COUNT(*) as total
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN brands b ON p.brand_id = b.id
       ${whereClause}
     `
     
@@ -131,8 +139,12 @@ export async function GET(request: NextRequest) {
       stock_quantity: row.stock_quantity,
       weight: row.weight,
       dimensions: row.dimensions,
-      images: row.images || [],
-      tags: row.tags || [],
+      images: Array.isArray(row.images) ? row.images : (row.images ? JSON.parse(row.images) : ['/placeholder.svg']),
+      image: (() => {
+        const imagesArray = Array.isArray(row.images) ? row.images : (row.images ? JSON.parse(row.images) : ['/placeholder.svg'])
+        return imagesArray[0] || '/placeholder.svg'
+      })(),
+      tags: Array.isArray(row.tags) ? row.tags : (row.tags ? JSON.parse(row.tags) : []),
       meta_title: row.meta_title,
       meta_description: row.meta_description,
       created_at: row.created_at,
