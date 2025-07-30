@@ -1,730 +1,560 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight, ImageIcon, Upload, Wand2, Download, Loader2 } from "lucide-react"
+import { Plus, Edit, Trash2, Eye, ToggleLeft, ToggleRight, ImageIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Textarea } from "@/components/ui/textarea"
+import { useStore } from "@/lib/store"
+import { motion } from "framer-motion"
+import PageTransition from "@/components/ui/page-transition"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
-import { useDebounce } from "@/hooks/use-debounce"
-
-interface Banner {
-  id: number
-  title: string
-  subtitle: string
-  description: string
-  image_url: string
-  button_text: string
-  button_url: string
-  is_active: boolean
-  order_index: number
-  created_at: string
-  updated_at: string
-}
-
-interface Product {
-  id: number
-  name: string
-  slug: string
-  category?: string
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Switch } from "@/components/ui/switch"
 
 export default function BannersPage() {
-  const [banners, setBanners] = useState<Banner[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editingBanner, setEditingBanner] = useState<Banner | null>(null)
-  const [showAddForm, setShowAddForm] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [generatingMagic, setGeneratingMagic] = useState(false)
-  const [searchingProducts, setSearchingProducts] = useState(false)
-  const [productSearchQuery, setProductSearchQuery] = useState("")
-  const [productResults, setProductResults] = useState<Product[]>([])
-  const { toast } = useToast()
+  const { banners, addBanner, updateBanner, deleteBanner, toggleBanner } = useStore()
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+  const [editingBanner, setEditingBanner] = useState<any>(null)
+  const [viewingBanner, setViewingBanner] = useState<any>(null)
 
-  const [newBanner, setNewBanner] = useState<Partial<Banner>>({
+  const [formData, setFormData] = useState({
     title: "",
     subtitle: "",
-    description: "",
-    image_url: "",
-    button_text: "Lihat Produk",
-    button_url: "/shop",
-    is_active: true,
-    order_index: 0,
+    mainText: "",
+    highlight: "",
+    discount: "",
+    discountText: "",
+    buttonText: "Shop Now",
+    buttonLink: "/shop",
+    background: "bg-gradient-to-r from-gray-50 to-gray-100",
+    image: "/placeholder.svg?height=300&width=300",
+    isActive: true,
+    position: "hero" as "hero" | "promo",
+    order: 1,
   })
 
-  const debouncedProductSearch = useDebounce(productSearchQuery, 300)
+  const heroBanners = banners.filter((b) => b.position === "hero").sort((a, b) => a.order - b.order)
+  const promoBanners = banners.filter((b) => b.position === "promo").sort((a, b) => a.order - b.order)
 
-  // Load banners
-  const loadBanners = async () => {
-    try {
-      const response = await fetch('/api/admin/banners')
-      if (response.ok) {
-        const data = await response.json()
-        setBanners(data.banners || [])
-      }
-    } catch (error) {
-      console.error('Error loading banners:', error)
-      toast({
-        title: "Error",
-        description: "Failed to load banners",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadBanners()
-  }, [])
-
-  // Search products
-  useEffect(() => {
-    const searchProducts = async () => {
-      if (!debouncedProductSearch.trim()) {
-        setProductResults([])
-        return
-      }
-
-      setSearchingProducts(true)
-      try {
-        const response = await fetch(`/api/products?search=${encodeURIComponent(debouncedProductSearch)}&limit=10`)
-        if (response.ok) {
-          const data = await response.json()
-          setProductResults(data.products || [])
-        }
-      } catch (error) {
-        console.error('Error searching products:', error)
-      } finally {
-        setSearchingProducts(false)
-      }
-    }
-
-    searchProducts()
-  }, [debouncedProductSearch])
-
-  // Add banner
-  const addBanner = async (banner: Partial<Banner>) => {
-    try {
-      // Upload image if file is selected
-      let imageUrl = banner.image_url || ""
-
-      const response = await fetch('/api/admin/banners', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...banner,
-          image_url: imageUrl,
-        }),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Banner added successfully",
-        })
-        setNewBanner({
-          title: "",
-          subtitle: "",
-          description: "",
-          image_url: "",
-          button_text: "Lihat Produk",
-          button_url: "/shop",
-          is_active: true,
-          order_index: 0,
-        })
-        setShowAddForm(false)
-        loadBanners()
-      } else {
-        throw new Error('Failed to add banner')
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add banner",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Update banner
-  const updateBanner = async (id: number, banner: Partial<Banner>) => {
-    try {
-      const response = await fetch(`/api/banners/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(banner),
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Banner updated successfully",
-        })
-        setEditingBanner(null)
-        loadBanners()
-      } else {
-        throw new Error('Failed to update banner')
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update banner",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Delete banner
-  const deleteBanner = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this banner?')) return
-
-    try {
-      const response = await fetch(`/api/banners/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Banner deleted successfully",
-        })
-        loadBanners()
-      } else {
-        throw new Error('Failed to delete banner')
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete banner",
-        variant: "destructive",
-      })
-    }
-  }
-
-  // Toggle banner status
-  const toggleBannerStatus = async (id: number, isActive: boolean) => {
-    await updateBanner(id, { is_active: isActive })
-  }
-
-  // Handle file upload
-  const handleFileUpload = async (file: File, isEdit = false) => {
-    if (!file) return
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Error",
-        description: "File size should be less than 5MB",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('folder', 'banners')
-
-    setUploading(true)
-    try {
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (isEdit && editingBanner) {
-          setEditingBanner({ ...editingBanner, image_url: data.url })
-        } else {
-          setNewBanner({ ...newBanner, image_url: data.url })
-        }
-        toast({
-          title: "Success",
-          description: "Image uploaded successfully",
-        })
-      } else {
-        throw new Error('Upload failed')
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to upload image",
-        variant: "destructive",
-      })
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  // Generate magic SEO content
-  const generateMagicContent = async (isEdit = false) => {
-    setGeneratingMagic(true)
-    try {
-      // Simulate API call for SEO content generation
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      const magicContent = {
-        title: "GPS Survey Equipment - Precision Tools",
-        subtitle: "Professional Grade Mapping Solutions",
-        description: "Discover our comprehensive range of GPS survey equipment, GNSS receivers, and professional mapping tools. Get accurate positioning and reliable data collection for your surveying projects.",
-        button_text: "Explore Products",
-        button_url: "/shop/gps-equipment"
-      }
-
-      if (isEdit && editingBanner) {
-        setEditingBanner({ ...editingBanner, ...magicContent })
-      } else {
-        setNewBanner({ ...newBanner, ...magicContent })
-      }
-
-      toast({
-        title: "✨ Magic Applied!",
-        description: "SEO-optimized content generated successfully",
-      })
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to generate content",
-        variant: "destructive",
-      })
-    } finally {
-      setGeneratingMagic(false)
-    }
-  }
-
-  // Select product for banner URL
-  const selectProduct = (product: Product, isEdit = false) => {
-    const productUrl = `/product/${product.slug}`
-    if (isEdit && editingBanner) {
-      setEditingBanner({ ...editingBanner, button_url: productUrl })
-    } else {
-      setNewBanner({ ...newBanner, button_url: productUrl })
-    }
-    setProductSearchQuery("")
-    setProductResults([])
-    toast({
-      title: "Product Selected",
-      description: `Banner will link to ${product.name}`,
+  const resetForm = () => {
+    setFormData({
+      title: "",
+      subtitle: "",
+      mainText: "",
+      highlight: "",
+      discount: "",
+      discountText: "",
+      buttonText: "Shop Now",
+      buttonLink: "/shop",
+      background: "bg-gradient-to-r from-gray-50 to-gray-100",
+      image: "/placeholder.svg?height=300&width=300",
+      isActive: true,
+      position: "hero",
+      order: 1,
     })
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    )
+  const handleAddBanner = () => {
+    addBanner(formData)
+    resetForm()
+    setIsAddDialogOpen(false)
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Banner Management</h1>
-          <p className="text-gray-600">Manage homepage banners and promotional content</p>
+  const handleEditBanner = () => {
+    if (editingBanner) {
+      updateBanner(editingBanner.id, formData)
+      setIsEditDialogOpen(false)
+      setEditingBanner(null)
+      resetForm()
+    }
+  }
+
+  const openEditDialog = (banner: any) => {
+    setEditingBanner(banner)
+    setFormData({
+      title: banner.title,
+      subtitle: banner.subtitle || "",
+      mainText: banner.mainText,
+      highlight: banner.highlight,
+      discount: banner.discount || "",
+      discountText: banner.discountText || "",
+      buttonText: banner.buttonText,
+      buttonLink: banner.buttonLink,
+      background: banner.background,
+      image: banner.image,
+      isActive: banner.isActive,
+      position: banner.position,
+      order: banner.order,
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const openViewDialog = (banner: any) => {
+    setViewingBanner(banner)
+    setIsViewDialogOpen(true)
+  }
+
+  const handleDeleteBanner = (id: number) => {
+    if (confirm("Are you sure you want to delete this banner?")) {
+      deleteBanner(id)
+    }
+  }
+
+  const BannerPreview = ({ banner }: { banner: any }) => (
+    <div className={`relative rounded-lg overflow-hidden ${banner.background} p-6 h-40`}>
+      <div className="flex items-center justify-between h-full">
+        <div className="space-y-1">
+          <p className="text-xs font-medium text-gray-600">{banner.title}</p>
+          <h3 className="text-lg font-bold text-gray-800">
+            {banner.mainText}
+            {banner.highlight && <span className="text-green-600 ml-1">{banner.highlight}</span>}
+          </h3>
+          {banner.discount && (
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-500">{banner.discountText}</span>
+              <span className="text-xl font-bold text-orange-500">{banner.discount}%</span>
+            </div>
+          )}
+          <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1">
+            {banner.buttonText}
+          </Button>
         </div>
-        <Button 
-          onClick={() => setShowAddForm(true)} 
-          className="bg-blue-600 hover:bg-blue-700"
+        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+          <ImageIcon className="w-6 h-6 text-gray-400" />
+        </div>
+      </div>
+    </div>
+  )
+
+  const FormContent = () => (
+    <div className="space-y-4">
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="position" className="text-right">
+          Position *
+        </Label>
+        <Select
+          value={formData.position}
+          onValueChange={(value: "hero" | "promo") => setFormData({ ...formData, position: value })}
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Add Banner
-        </Button>
+          <SelectTrigger className="col-span-3">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="hero">Hero Banner (Large)</SelectItem>
+            <SelectItem value="promo">Promo Banner (Small)</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Add Banner Form */}
-      {showAddForm && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="w-5 h-5" />
-              Add New Banner
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  value={newBanner.title}
-                  onChange={(e) => setNewBanner({ ...newBanner, title: e.target.value })}
-                  placeholder="Banner title..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="subtitle">Subtitle</Label>
-                <Input
-                  id="subtitle"
-                  value={newBanner.subtitle}
-                  onChange={(e) => setNewBanner({ ...newBanner, subtitle: e.target.value })}
-                  placeholder="Banner subtitle..."
-                />
-              </div>
-            </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="title" className="text-right">
+          Title *
+        </Label>
+        <Input
+          id="title"
+          value={formData.title}
+          onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          className="col-span-3"
+          placeholder="Banner title"
+        />
+      </div>
 
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={newBanner.description}
-                onChange={(e) => setNewBanner({ ...newBanner, description: e.target.value })}
-                placeholder="Banner description..."
-                rows={3}
-              />
-            </div>
+      {formData.position === "promo" && (
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="subtitle" className="text-right">
+            Subtitle
+          </Label>
+          <Input
+            id="subtitle"
+            value={formData.subtitle}
+            onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+            className="col-span-3"
+            placeholder="Banner subtitle"
+          />
+        </div>
+      )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="button_text">Button Text</Label>
-                <Input
-                  id="button_text"
-                  value={newBanner.button_text}
-                  onChange={(e) => setNewBanner({ ...newBanner, button_text: e.target.value })}
-                  placeholder="Button text..."
-                />
-              </div>
-              <div>
-                <Label htmlFor="button_url">Button URL</Label>
-                <Input
-                  id="button_url"
-                  value={newBanner.button_url}
-                  onChange={(e) => setNewBanner({ ...newBanner, button_url: e.target.value })}
-                  placeholder="/shop or /product/slug"
-                />
-              </div>
-            </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="mainText" className="text-right">
+          Main Text *
+        </Label>
+        <Input
+          id="mainText"
+          value={formData.mainText}
+          onChange={(e) => setFormData({ ...formData, mainText: e.target.value })}
+          className="col-span-3"
+          placeholder="Main text"
+        />
+      </div>
 
-            {/* Product Search */}
-            <div>
-              <Label>Search Products for Banner Link</Label>
-              <Input
-                value={productSearchQuery}
-                onChange={(e) => setProductSearchQuery(e.target.value)}
-                placeholder="Type product name to search..."
-              />
-              {searchingProducts && (
-                <div className="flex items-center gap-2 mt-2 text-sm text-gray-500">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Searching products...
-                </div>
-              )}
-              {productResults.length > 0 && (
-                <div className="mt-2 border border-gray-200 rounded-md max-h-40 overflow-y-auto">
-                  {productResults.map((product) => (
-                    <div
-                      key={product.id}
-                      className="p-2 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
-                      onClick={() => selectProduct(product)}
-                    >
-                      <div className="font-medium">{product.name}</div>
-                      <div className="text-sm text-gray-500">/product/{product.slug}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="highlight" className="text-right">
+          Highlight Text
+        </Label>
+        <Input
+          id="highlight"
+          value={formData.highlight}
+          onChange={(e) => setFormData({ ...formData, highlight: e.target.value })}
+          className="col-span-3"
+          placeholder="Highlighted text"
+        />
+      </div>
 
-            {/* Image Upload */}
-            <div>
-              <Label htmlFor="image">Banner Image</Label>
-              <div className="mt-2 space-y-2">
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleFileUpload(file)
-                  }}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                {uploading && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Uploading image...
-                  </div>
-                )}
-                {newBanner.image_url && (
-                  <div className="relative">
-                    <img
-                      src={newBanner.image_url}
-                      alt="Preview"
-                      className="w-full h-32 object-cover rounded-md"
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="discount" className="text-right col-span-2">
+            Discount %
+          </Label>
+          <Input
+            id="discount"
+            type="number"
+            value={formData.discount}
+            onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
+            className="col-span-2"
+            placeholder="25"
+          />
+        </div>
+        <div className="grid grid-cols-4 items-center gap-4">
+          <Label htmlFor="discountText" className="text-right col-span-2">
+            Discount Text
+          </Label>
+          <Input
+            id="discountText"
+            value={formData.discountText}
+            onChange={(e) => setFormData({ ...formData, discountText: e.target.value })}
+            className="col-span-2"
+            placeholder="Save up to"
+          />
+        </div>
+      </div>
 
-            <div className="flex justify-between">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => generateMagicContent()}
-                disabled={generatingMagic}
-                className="flex items-center gap-2"
-              >
-                {generatingMagic ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Wand2 className="w-4 h-4" />
-                )}
-                {generatingMagic ? "Generating..." : "✨ Magic SEO"}
-              </Button>
-              
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setShowAddForm(false)}
-                >
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="buttonText" className="text-right">
+          Button Text *
+        </Label>
+        <Input
+          id="buttonText"
+          value={formData.buttonText}
+          onChange={(e) => setFormData({ ...formData, buttonText: e.target.value })}
+          className="col-span-3"
+          placeholder="Shop Now"
+        />
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="buttonLink" className="text-right">
+          Button Link *
+        </Label>
+        <Input
+          id="buttonLink"
+          value={formData.buttonLink}
+          onChange={(e) => setFormData({ ...formData, buttonLink: e.target.value })}
+          className="col-span-3"
+          placeholder="/shop"
+        />
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="background" className="text-right">
+          Background Class
+        </Label>
+        <Select value={formData.background} onValueChange={(value) => setFormData({ ...formData, background: value })}>
+          <SelectTrigger className="col-span-3">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="bg-gradient-to-r from-gray-50 to-gray-100">Gray Gradient</SelectItem>
+            <SelectItem value="bg-gradient-to-r from-green-50 to-blue-50">Green-Blue Gradient</SelectItem>
+            <SelectItem value="bg-gradient-to-r from-orange-50 to-yellow-50">Orange-Yellow Gradient</SelectItem>
+            <SelectItem value="bg-yellow-50">Yellow</SelectItem>
+            <SelectItem value="bg-blue-50">Blue</SelectItem>
+            <SelectItem value="bg-green-50">Green</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="order" className="text-right">
+          Display Order
+        </Label>
+        <Input
+          id="order"
+          type="number"
+          value={formData.order}
+          onChange={(e) => setFormData({ ...formData, order: Number(e.target.value) })}
+          className="col-span-3"
+          placeholder="1"
+          min="1"
+        />
+      </div>
+
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="isActive" className="text-right">
+          Active
+        </Label>
+        <Switch
+          id="isActive"
+          checked={formData.isActive}
+          onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
+        />
+      </div>
+
+      {/* Preview */}
+      <div className="space-y-2">
+        <Label>Preview</Label>
+        <BannerPreview banner={formData} />
+      </div>
+    </div>
+  )
+
+  return (
+    <PageTransition>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Banner Management</h1>
+            <p className="text-gray-600">Manage homepage banners and promotional content</p>
+          </div>
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Banner
+                </Button>
+              </motion.div>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Create New Banner</DialogTitle>
+                <DialogDescription>Design a new banner for your homepage.</DialogDescription>
+              </DialogHeader>
+              <FormContent />
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
                 </Button>
                 <Button
-                  type="button"
-                  onClick={() => addBanner(newBanner)}
-                  className="bg-green-600 hover:bg-green-700"
+                  onClick={handleAddBanner}
+                  disabled={!formData.title || !formData.mainText || !formData.buttonText}
                 >
-                  Add Banner
+                  Create Banner
                 </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
 
-      {/* Banners List */}
-      <div className="grid gap-4">
-        {banners.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No banners found</h3>
-              <p className="text-gray-500 mb-4">Get started by creating your first banner</p>
-              <Button onClick={() => setShowAddForm(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Banner
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          banners.map((banner) => (
-            <Card key={banner.id}>
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row gap-6">
-                  {/* Banner Preview */}
-                  <div className="lg:w-1/3">
-                    {banner.image_url ? (
-                      <img
-                        src={banner.image_url}
-                        alt={banner.title}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                    ) : (
-                      <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                        <ImageIcon className="w-12 h-12 text-gray-400" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Banner Info */}
-                  <div className="lg:w-2/3 space-y-4">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="text-xl font-semibold">{banner.title}</h3>
-                        <p className="text-gray-600 mt-1">{banner.subtitle}</p>
-                        <p className="text-sm text-gray-500 mt-2">{banner.description}</p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={banner.is_active ? "default" : "secondary"}>
-                          {banner.is_active ? "Active" : "Inactive"}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span>Button: {banner.button_text}</span>
-                      <span>URL: {banner.button_url}</span>
-                      <span>Order: {banner.order_index}</span>
-                    </div>
-
+        {/* Hero Banners */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Hero Banners (Large - Main Slider)</span>
+              <Badge variant="outline">{heroBanners.length} banners</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {heroBanners.map((banner, index) => (
+                <motion.div
+                  key={banner.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="border rounded-lg p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">{banner.title}</h3>
                     <div className="flex items-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setEditingBanner(banner)}
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                      
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => toggleBannerStatus(banner.id, !banner.is_active)}
-                      >
-                        {banner.is_active ? (
-                          <>
-                            <ToggleRight className="w-4 h-4 mr-1" />
-                            Deactivate
-                          </>
+                      <Badge variant={banner.isActive ? "default" : "secondary"}>
+                        {banner.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                      <Button variant="ghost" size="sm" onClick={() => toggleBanner(banner.id)}>
+                        {banner.isActive ? (
+                          <ToggleRight className="w-4 h-4 text-green-600" />
                         ) : (
-                          <>
-                            <ToggleLeft className="w-4 h-4 mr-1" />
-                            Activate
-                          </>
+                          <ToggleLeft className="w-4 h-4 text-gray-400" />
                         )}
                       </Button>
+                    </div>
+                  </div>
 
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => deleteBanner(banner.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
+                  <BannerPreview banner={banner} />
+
+                  <div className="flex gap-2">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => openViewDialog(banner)}>
+                        <Eye className="w-3 h-3 mr-1" />
+                        View
+                      </Button>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => openEditDialog(banner)}>
+                        <Edit className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+            {heroBanners.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No hero banners created yet. Add your first banner to get started.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Promo Banners */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Promo Banners (Small - Grid Layout)</span>
+              <Badge variant="outline">{promoBanners.length} banners</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {promoBanners.map((banner, index) => (
+                <motion.div
+                  key={banner.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="border rounded-lg p-4 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-medium">{banner.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={banner.isActive ? "default" : "secondary"}>
+                        {banner.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                      <Button variant="ghost" size="sm" onClick={() => toggleBanner(banner.id)}>
+                        {banner.isActive ? (
+                          <ToggleRight className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <ToggleLeft className="w-4 h-4 text-gray-400" />
+                        )}
                       </Button>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
 
-      {/* Edit Banner Modal/Form */}
-      {editingBanner && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Edit className="w-5 h-5" />
-                Edit Banner
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-title">Title</Label>
-                  <Input
-                    id="edit-title"
-                    value={editingBanner.title}
-                    onChange={(e) => setEditingBanner({ ...editingBanner, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-subtitle">Subtitle</Label>
-                  <Input
-                    id="edit-subtitle"
-                    value={editingBanner.subtitle}
-                    onChange={(e) => setEditingBanner({ ...editingBanner, subtitle: e.target.value })}
-                  />
-                </div>
-              </div>
+                  <BannerPreview banner={banner} />
 
-              <div>
-                <Label htmlFor="edit-description">Description</Label>
-                <Textarea
-                  id="edit-description"
-                  value={editingBanner.description}
-                  onChange={(e) => setEditingBanner({ ...editingBanner, description: e.target.value })}
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="edit-button-text">Button Text</Label>
-                  <Input
-                    id="edit-button-text"
-                    value={editingBanner.button_text}
-                    onChange={(e) => setEditingBanner({ ...editingBanner, button_text: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="edit-button-url">Button URL</Label>
-                  <Input
-                    id="edit-button-url"
-                    value={editingBanner.button_url}
-                    onChange={(e) => setEditingBanner({ ...editingBanner, button_url: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Current Image */}
-              {editingBanner.image_url && (
-                <div>
-                  <Label>Current Image</Label>
-                  <img
-                    src={editingBanner.image_url}
-                    alt="Current"
-                    className="w-full h-32 object-cover rounded-md mt-2"
-                  />
-                </div>
-              )}
-
-              {/* Upload New Image */}
-              <div>
-                <Label htmlFor="edit-image">Upload New Image</Label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) handleFileUpload(file, true)
-                  }}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 mt-2"
-                />
-                {uploading && (
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mt-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Uploading image...
+                  <div className="flex gap-2">
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => openViewDialog(banner)}>
+                        <Eye className="w-3 h-3 mr-1" />
+                        View
+                      </Button>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full" onClick={() => openEditDialog(banner)}>
+                        <Edit className="w-3 h-3 mr-1" />
+                        Edit
+                      </Button>
+                    </motion.div>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button variant="outline" size="sm" onClick={() => handleDeleteBanner(banner.id)}>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </motion.div>
                   </div>
-                )}
+                </motion.div>
+              ))}
+            </div>
+            {promoBanners.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                No promo banners created yet. Add your first banner to get started.
               </div>
+            )}
+          </CardContent>
+        </Card>
 
-              <div className="flex justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => generateMagicContent(true)}
-                  disabled={generatingMagic}
-                  className="flex items-center gap-2"
-                >
-                  {generatingMagic ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Wand2 className="w-4 h-4" />
-                  )}
-                  {generatingMagic ? "Generating..." : "✨ Magic SEO"}
-                </Button>
-                
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setEditingBanner(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => updateBanner(editingBanner.id, editingBanner)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    Update Banner
-                  </Button>
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Banner</DialogTitle>
+              <DialogDescription>Update banner information and settings.</DialogDescription>
+            </DialogHeader>
+            <FormContent />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleEditBanner}>Update Banner</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Banner Details</DialogTitle>
+            </DialogHeader>
+            {viewingBanner && (
+              <div className="space-y-4">
+                <BannerPreview banner={viewingBanner} />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Position</label>
+                    <p className="capitalize">{viewingBanner.position}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Status</label>
+                    <p>
+                      <Badge variant={viewingBanner.isActive ? "default" : "secondary"}>
+                        {viewingBanner.isActive ? "Active" : "Inactive"}
+                      </Badge>
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Order</label>
+                    <p>{viewingBanner.order}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Button Link</label>
+                    <p className="text-blue-600">{viewingBanner.buttonLink}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500">Background Class</label>
+                  <p className="font-mono text-sm bg-gray-100 p-2 rounded">{viewingBanner.background}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-    </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageTransition>
   )
 }

@@ -7,6 +7,7 @@ import { X, Minus, Plus, Heart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { Progress } from "@/components/ui/progress"
+import { formatCurrency } from "@/lib/currency"
 
 interface CartPopupProps {
   isOpen: boolean
@@ -89,11 +90,11 @@ export default function CartPopup({ isOpen, onClose, addedProduct }: CartPopupPr
                   </button>
                 </div>
                 <span className="text-sm">×</span>
-                <span className="font-medium">${addedProduct.price.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(addedProduct.price)}</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-lg font-bold">${(addedProduct.price * quantity).toFixed(2)}</div>
+              <div className="text-lg font-bold">{formatCurrency(addedProduct.price * quantity)}</div>
             </div>
           </div>
 
@@ -106,15 +107,15 @@ export default function CartPopup({ isOpen, onClose, addedProduct }: CartPopupPr
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span>Subtotal</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
-                <span>Flat rate: ${shipping.toFixed(2)}</span>
+                <span>Flat rate: {formatCurrency(shipping)}</span>
               </div>
               <div className="flex justify-between font-bold text-lg pt-2 border-t">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatCurrency(total)}</span>
               </div>
             </div>
           </div>
@@ -128,7 +129,7 @@ export default function CartPopup({ isOpen, onClose, addedProduct }: CartPopupPr
               </span>
             </div>
             <p className="text-sm text-center">
-              Spend <span className="font-medium text-green-600">${(freeShippingThreshold - total).toFixed(2)}</span>{" "}
+              Spend <span className="font-medium text-green-600">{formatCurrency(freeShippingThreshold - total)}</span>{" "}
               more to reach <span className="font-medium text-red-600">FREE SHIPPING!</span>
             </p>
           </div>
@@ -162,7 +163,7 @@ export default function CartPopup({ isOpen, onClose, addedProduct }: CartPopupPr
                   </div>
                   <div className="mt-2">
                     <p className="text-sm font-medium truncate">{product.name}</p>
-                    <p className="text-sm text-gray-600">${product.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-600">{formatCurrency(product.price)}</p>
                   </div>
                 </div>
               ))}

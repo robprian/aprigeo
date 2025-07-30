@@ -10,6 +10,7 @@ import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
 import { useMobile } from "@/hooks/use-mobile"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/currency"
 
 interface Product {
   id: number

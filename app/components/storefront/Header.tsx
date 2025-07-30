@@ -1,10 +1,13 @@
 "use client"
 
+import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
-import { Search, ShoppingBag, Heart, User, Menu, X, ChevronDown } from "lucide-react"
+import { Menu, X, ChevronDown, User, Heart, ShoppingBag, Search } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
+import RealtimeSearch from "@/app/components/search/RealtimeSearch"
 import { useCompare } from "@/hooks/useCompare"
 
 const navigationLinks = [
@@ -129,27 +132,16 @@ export default function Header() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
-              <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-green-500 rounded-md flex items-center justify-center">
-                  <span className="text-white font-bold">AG</span>
-                </div>
-                <div>
-                  <div className="text-xl font-bold">CV. Aprinia Geosat</div>
-                  <div className="text-xs text-gray-500">Survey Equipment & GPS Tools</div>
-                </div>
-              </div>
+              <img 
+                src="/logo-aprinia-geosat.png" 
+                alt="CV. Aprinia Geosat Solusindo" 
+                className="h-12 w-auto object-contain"
+              />
             </Link>
 
             {/* Search - Desktop */}
             <div className="hidden md:block flex-1 max-w-md mx-6">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search for products..."
-                  className="w-full border border-gray-300 rounded-md py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
+              <RealtimeSearch className="w-full" />
             </div>
 
             {/* Mobile Menu Toggle */}
@@ -262,14 +254,11 @@ export default function Header() {
         <div className="md:hidden border-t border-gray-200">
           {/* Search - Mobile */}
           <div className="p-4 border-b border-gray-200">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search for products..."
-                className="w-full border border-gray-300 rounded-md py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            </div>
+            <RealtimeSearch 
+              className="w-full" 
+              placeholder="Search products..."
+              onSearch={() => setIsMobileMenuOpen(false)}
+            />
           </div>
 
           {/* Navigation - Mobile */}

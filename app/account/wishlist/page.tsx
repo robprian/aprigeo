@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart, Trash2, BarChart2, Heart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/currency"
 
 // Mock wishlist data - in a real app, this would come from an API or local storage
 const initialWishlistItems = [
@@ -105,10 +106,10 @@ export default function AccountWishlistPage() {
                 </Link>
 
                 <div className="flex items-center mb-2">
-                  <span className="font-bold text-gray-900">${item.price.toLocaleString()}</span>
+                  <span className="font-bold text-gray-900">{formatCurrency(item.price)}</span>
                   {item.originalPrice && (
                     <span className="ml-2 text-sm text-gray-500 line-through">
-                      ${item.originalPrice.toLocaleString()}
+                      {formatCurrency(item.originalPrice)}
                     </span>
                   )}
                 </div>

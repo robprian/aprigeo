@@ -11,6 +11,7 @@ import { useWishlist } from "@/hooks/useWishlist"
 import { useCompare } from "@/hooks/useCompare"
 import { useCart } from "@/hooks/useCart"
 import { toast } from "@/hooks/use-toast"
+import { formatCurrency } from "@/lib/currency"
 import ProductHoverActions from "../shop/ProductHoverActions"
 
 interface ProductCardProps {
@@ -214,9 +215,9 @@ export default function ProductCard({ product, onQuickView, className = "" }: Pr
 
           {/* Price */}
           <div className="flex items-center">
-            <span className="text-base font-semibold text-gray-900">${product.price.toFixed(2)}</span>
+            <span className="text-base font-semibold text-gray-900">{formatCurrency(product.price)}</span>
             {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through ml-2">${product.originalPrice.toFixed(2)}</span>
+              <span className="text-sm text-gray-500 line-through ml-2">{formatCurrency(product.originalPrice)}</span>
             )}
           </div>
         </div>

@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useState } from "react"
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/use-toast"
+import { usePathname } from "next/navigation"
 
 interface AdminHeaderProps {
   onMenuClick: () => void
@@ -27,8 +26,6 @@ export default function AdminHeader({ onMenuClick, isCollapsed, onToggleCollapse
   const [theme, setTheme] = useState<"light" | "dark">("light")
   const [searchOpen, setSearchOpen] = useState(false)
   const pathname = usePathname()
-  const router = useRouter()
-  const { toast } = useToast()
 
   // Extract breadcrumb from pathname
   const getBreadcrumbs = () => {
@@ -44,27 +41,6 @@ export default function AdminHeader({ onMenuClick, isCollapsed, onToggleCollapse
   const toggleTheme = () => {
     setTheme(theme === "light" ? "dark" : "light")
     // Implement actual theme switching logic here
-  }
-
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/admin/login', {
-        method: 'DELETE',
-      })
-      
-      toast({
-        title: "Logout berhasil",
-        description: "Anda telah keluar dari admin portal.",
-      })
-      
-      router.push('/admin/login')
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Gagal logout",
-        variant: "destructive",
-      })
-    }
   }
 
   return (
@@ -202,12 +178,7 @@ export default function AdminHeader({ onMenuClick, isCollapsed, onToggleCollapse
                     Back to Store
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem 
-                  className="text-red-600 cursor-pointer"
-                  onClick={handleLogout}
-                >
-                  Logout
-                </DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600">Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

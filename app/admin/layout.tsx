@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import AdminSidebar from "./components/AdminSidebar"
 import AdminHeader from "./components/AdminHeader"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function AdminLayout({
   children,
@@ -20,15 +21,9 @@ export default function AdminLayout({
     setSidebarOpen(false)
   }, [pathname])
 
-  // Don't show sidebar and header for login page
-  const isLoginPage = pathname === '/admin/login'
-
-  if (isLoginPage) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {children}
-      </div>
-    )
+  // If it's the login page, render without admin layout
+  if (pathname === '/admin/login') {
+    return <>{children}</>
   }
 
   return (
@@ -58,6 +53,7 @@ export default function AdminLayout({
           </main>
         </div>
       </div>
+      <Toaster />
     </div>
   )
 }

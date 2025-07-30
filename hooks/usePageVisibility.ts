@@ -1,34 +1,36 @@
-import { useState, useEffect } from 'react'
+"use client"
 
-export function usePageVisibility(slug: string) {
+import { useState, useEffect } from "react"
+
+export function usePageVisibility() {
   const [isVisible, setIsVisible] = useState(true)
-  const [loading, setLoading] = useState(true)
+  const [wasVisible, setWasVisible] = useState(true)
 
   useEffect(() => {
-    if (!slug) {
-      setLoading(false)
-      return
+    // Update the visibility state when the document's visibility changes
+    const handleVisibilityChange = () => {
+      const visible = !document.hidden
+      setWasVisible(isVisible)
+      setIsVisible(visible)
     }
 
-    const checkVisibility = async () => {
-      try {
-        const response = await fetch(`/api/pages/visibility?slug=${slug}`)
-        const data = await response.json()
-        
-        if (data.success) {
-          setIsVisible(data.visible)
-        }
-      } catch (error) {
-        console.error('Error checking page visibility:', error)
-        // Default to visible on error
-        setIsVisible(true)
-      } finally {
-        setLoading(false)
-      }
+    // Add event listener
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
+    // Initial check
+    setIsVisible(!document.hidden)
+
+    // Clean up
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
+  }, [isVisible])
 
-    checkVisibility()
-  }, [slug])
-
-  return { isVisible, loading }
+  return {
+    isVisible,
+    wasVisible,
+    hasChanged: isVisible !== wasVisible
+  }
 }
+
+export default usePageVisibility

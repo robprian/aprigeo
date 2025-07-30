@@ -11,6 +11,7 @@ import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
 import { useCompare } from "@/hooks/useCompare"
 import { toast } from "@/lib/toast"
+import { formatCurrency } from "@/lib/currency"
 import SocialShare from "@/app/components/storefront/SocialShare"
 import RecentlyViewedProducts from "@/app/components/storefront/RecentlyViewedProducts"
 
@@ -112,10 +113,10 @@ function ProductPageClient({ slug }: { slug: string }) {
       id: product.id,
       name: product.name,
       price: product.price,
-      originalPrice: product.compare_price,
+      originalPrice: product.original_price,
       image: product.images[0] || "/placeholder.jpg",
-      inStock: product.in_stock,
-      stock: product.stock_quantity
+      inStock: product.stock > 0,
+      stock: product.stock
     }
     addToCart(cartProduct, quantity)
     toast.success("Product added to cart!")
@@ -217,11 +218,11 @@ function ProductPageClient({ slug }: { slug: string }) {
           {/* Price */}
           <div className="flex items-center space-x-2">
             <span className="text-3xl font-bold text-green-600">
-              ${product.price.toFixed(2)}
+              {formatCurrency(product.price)}
             </span>
             {product.original_price && product.original_price > product.price && (
               <span className="text-xl text-gray-500 line-through">
-                ${product.original_price.toFixed(2)}
+                {formatCurrency(product.original_price)}
               </span>
             )}
           </div>

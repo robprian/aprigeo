@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { ShoppingCart, Heart, Star, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/currency"
 
 // Mock compare data - in a real app, this would come from an API or local storage
 const initialCompareItems = [
@@ -185,10 +186,10 @@ export default function ComparePage() {
                     </div>
 
                     <div className="mb-4">
-                      <span className="text-lg font-bold text-gray-900">${item.price.toLocaleString()}</span>
+                      <span className="text-lg font-bold text-gray-900">{formatCurrency(item.price)}</span>
                       {item.originalPrice && (
                         <span className="ml-2 text-sm text-gray-500 line-through">
-                          ${item.originalPrice.toLocaleString()}
+                          {formatCurrency(item.originalPrice)}
                         </span>
                       )}
                     </div>

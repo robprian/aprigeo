@@ -67,6 +67,7 @@ const contentItems = [
 
 const settingsItems = [
   { icon: TrendingUp, label: "Analytics", href: "/admin/reports" },
+  { icon: FileText, label: "Invoice Settings", href: "/admin/settings/invoice" },
   { icon: Wrench, label: "System Settings", href: "/admin/settings/system" },
 ]
 
@@ -104,7 +105,7 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
       return (
         <div className="relative group">
           <button
-            className={`flex items-center justify-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+            className={`flex items-center justify-center w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${
               isActiveSection(items)
                 ? "bg-blue-50 text-blue-700"
                 : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
@@ -112,7 +113,11 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
           >
             <SectionIcon className="w-5 h-5 flex-shrink-0" />
           </button>
-          <div className="absolute left-full top-0 ml-2 w-48 bg-white shadow-lg rounded-lg py-2 hidden group-hover:block z-50">
+          {/* Tooltip menu for collapsed state */}
+          <div className="absolute left-full top-0 ml-2 w-48 bg-white shadow-lg rounded-lg py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 border border-gray-200">
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide border-b border-gray-100">
+              {sectionName}
+            </div>
             {items.map((item) => (
               <Link
                 key={item.href}
@@ -122,6 +127,7 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
                     ? "bg-blue-600 text-white"
                     : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                 }`}
+                onClick={() => onClose()}
               >
                 <item.icon className="w-4 h-4 mr-3 flex-shrink-0" />
                 <span className="truncate">{item.label}</span>
@@ -135,11 +141,11 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
     return (
       <Collapsible open={isOpen} onOpenChange={setOpen}>
         <CollapsibleTrigger
-          className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
+          className={`flex items-center justify-between w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${
             isActiveSection(items) ? "bg-blue-50 text-blue-700" : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           }`}
         >
-          <div className="flex items-center">
+          <div className="flex items-center min-w-0">
             <SectionIcon className="w-5 h-5 mr-3 flex-shrink-0" />
             <span className="truncate">{sectionName}</span>
           </div>
@@ -154,14 +160,14 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="mt-1 space-y-1"
+                transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="mt-1 space-y-1 overflow-hidden"
               >
                 {items.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center px-3 py-2 ml-4 sm:ml-6 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    className={`flex items-center px-3 py-2 ml-4 sm:ml-6 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95 ${
                       pathname === item.href
                         ? "bg-blue-600 text-white shadow-sm"
                         : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
@@ -183,85 +189,96 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
   return (
     <>
       {/* Mobile overlay */}
-      {isOpen && <div className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden" onClick={onClose} />}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden transition-opacity duration-300" 
+          onClick={onClose} 
+        />
+      )}
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 bg-white shadow-xl border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        className={`fixed inset-y-0 left-0 z-50 bg-white shadow-xl border-r border-gray-200 transform transition-all duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${
           isOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isCollapsed ? "w-16" : "w-64"}`}
+        } ${isCollapsed ? "w-16 sidebar-collapsed" : "w-64"}`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-white">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CV</span>
-            </div>
+        <div className="flex-shrink-0 flex items-center justify-between h-16 px-4 border-b border-gray-200 bg-white">
+          <div className="flex items-center min-w-0">
+            <img
+              src="/logo-aprinia-geosat.png"
+              alt="Aprinia Geosat"
+              className="w-8 h-8 object-contain rounded-lg flex-shrink-0"
+            />
             {!isCollapsed && (
-              <span className="ml-3 font-semibold text-gray-900 text-sm sm:text-base">CV. Aprinia Admin</span>
+              <span className="ml-3 font-semibold text-gray-900 text-sm sm:text-base truncate">Aprinia Admin</span>
             )}
           </div>
-          <Button variant="ghost" size="sm" className="lg:hidden" onClick={onClose}>
+          <Button variant="ghost" size="sm" className="lg:hidden flex-shrink-0" onClick={onClose}>
             <X className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Navigation */}
-        <nav className={`flex-1 px-2 py-4 overflow-y-auto bg-white ${isCollapsed ? "px-2" : "px-3 sm:px-4"}`}>
-          <div className="space-y-1">
-            {/* Dashboard */}
-            <Link
-              href="/admin"
-              className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 ${
-                pathname === "/admin"
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-              } ${isCollapsed ? "justify-center" : ""}`}
-              onClick={() => onClose()}
-            >
-              <BarChart3 className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? "" : "mr-3"}`} />
-              {!isCollapsed && <span className="truncate">Dashboard</span>}
-            </Link>
+        {/* Navigation Container with proper flex layout */}
+        <div className="flex flex-col flex-1 min-h-0">
+          {/* Scrollable Navigation Area */}
+          <nav className={`flex-1 overflow-y-auto overflow-x-hidden py-4 bg-white sidebar-scroll ${isCollapsed ? "px-2" : "px-3 sm:px-4"}`}>
+            <div className="space-y-1 pb-4 min-h-full">
+              {/* Dashboard */}
+              <Link
+                href="/admin"
+                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 transform hover:scale-105 active:scale-95 ${
+                  pathname === "/admin"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                } ${isCollapsed ? "justify-center" : ""}`}
+                onClick={() => onClose()}
+              >
+                <BarChart3 className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? "" : "mr-3"}`} />
+                {!isCollapsed && <span className="truncate">Dashboard</span>}
+              </Link>
 
-            {/* Catalog */}
-            <div className="pt-2">
-              {renderSectionItems(catalogItems, "Catalog", catalogOpen, setCatalogOpen, Package)}
+              {/* Catalog */}
+              <div className="pt-2">
+                {renderSectionItems(catalogItems, "Catalog", catalogOpen, setCatalogOpen, Package)}
+              </div>
+
+              {/* Sales */}
+              <div className="pt-2">{renderSectionItems(salesItems, "Sales", salesOpen, setSalesOpen, ShoppingCart)}</div>
+
+              {/* Marketing */}
+              <div className="pt-2">
+                {renderSectionItems(marketingItems, "Marketing", marketingOpen, setMarketingOpen, Megaphone)}
+              </div>
+
+              {/* Content */}
+              <div className="pt-2">
+                {renderSectionItems(contentItems, "Content", contentOpen, setContentOpen, FileText)}
+              </div>
+
+              {/* Settings & Reports */}
+              <div className="pt-2">
+                {renderSectionItems(settingsItems, "Settings & Reports", settingsOpen, setSettingsOpen, Settings)}
+              </div>
             </div>
+          </nav>
 
-            {/* Sales */}
-            <div className="pt-2">{renderSectionItems(salesItems, "Sales", salesOpen, setSalesOpen, ShoppingCart)}</div>
-
-            {/* Marketing */}
-            <div className="pt-2">
-              {renderSectionItems(marketingItems, "Marketing", marketingOpen, setMarketingOpen, Megaphone)}
-            </div>
-
-            {/* Content */}
-            <div className="pt-2">
-              {renderSectionItems(contentItems, "Content", contentOpen, setContentOpen, FileText)}
-            </div>
-
-            {/* Settings & Reports */}
-            <div className="pt-2">
-              {renderSectionItems(settingsItems, "Settings & Reports", settingsOpen, setSettingsOpen, Settings)}
-            </div>
-          </div>
-
-          {/* Bottom actions */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
+          {/* Bottom Actions - Fixed at bottom */}
+          <div className={`flex-shrink-0 p-4 border-t border-gray-200 bg-white ${isCollapsed ? "px-2" : "px-3 sm:px-4"}`}>
             <div className="space-y-2">
               <Link
                 href="/"
-                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900 ${
+                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-900 active:scale-95 ${
                   isCollapsed ? "justify-center" : ""
                 }`}
+                onClick={() => onClose()}
               >
                 <Home className={`w-5 h-5 flex-shrink-0 ${isCollapsed ? "" : "mr-3"}`} />
                 {!isCollapsed && <span className="truncate">Back to Store</span>}
               </Link>
 
               <button
-                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-red-600 hover:bg-red-50 w-full ${
+                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 text-red-600 hover:bg-red-50 w-full active:scale-95 ${
                   isCollapsed ? "justify-center" : ""
                 }`}
               >
@@ -270,7 +287,7 @@ export default function AdminSidebar({ isOpen, onClose, isCollapsed, onToggleCol
               </button>
             </div>
           </div>
-        </nav>
+        </div>
       </div>
     </>
   )

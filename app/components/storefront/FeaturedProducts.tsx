@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Star, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { useFeaturedProducts } from "@/hooks/useProducts"
+import { formatCurrency } from "@/lib/currency"
 
 export default function FeaturedProducts() {
   const { products, isLoading } = useFeaturedProducts()
@@ -69,10 +70,10 @@ export default function FeaturedProducts() {
 
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <span className="text-xl font-bold text-gray-900">${product.price.toLocaleString()}</span>
+                      <span className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
                       {product.compare_price && (
                         <span className="text-sm text-gray-500 line-through ml-2">
-                          ${product.compare_price.toLocaleString()}
+                          {formatCurrency(product.compare_price)}
                         </span>
                       )}
                     </div>

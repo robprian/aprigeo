@@ -10,6 +10,7 @@ import { useCompare } from "@/hooks/useCompare"
 import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/currency"
 
 interface Product {
   id: number
@@ -216,10 +217,10 @@ export default function ProductComparison({ isOpen, onClose }: ProductComparison
                   </div>
 
                   <div className="flex items-center space-x-2 mb-4">
-                    <span className="text-xl font-bold text-green-600">${product.price.toLocaleString()}</span>
+                    <span className="text-xl font-bold text-green-600">{formatCurrency(product.price)}</span>
                     {product.originalPrice && (
                       <span className="text-sm text-gray-400 line-through">
-                        ${product.originalPrice.toLocaleString()}
+                        {formatCurrency(product.originalPrice)}
                       </span>
                     )}
                   </div>

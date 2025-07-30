@@ -1,105 +1,99 @@
-import { useState, useEffect } from 'react'
+"use client"
 
-interface WishlistItem {
+import { useState, useEffect } from "react"
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
+
+interface Product {
   id: number
-  productId: number
-  title: string
+  name: string
   price: number
-  image: string
-  addedAt: string
+  image?: string
 }
 
+interface WishlistStore {
+  items: Product[]
+  add: (product: Product) => Promise<void>
+  remove: (productId: number) => Promise<void>
+  clear: () => Promise<void>
+  isInWishlist: (productId: number) => boolean
+  getCount: () => number
+}
+
+// Create a Zustand store with persistence
+const useWishlistStore = create<WishlistStore>()(
+  persist(
+    (set, get) => ({
+      items: [],
+      add: async (product) => {
+        // Simulate network delay for real-world feel
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        set((state) => {
+          // Check if product already exists
+          if (state.items.some((item) => item.id === product.id)) {
+            return state
+          }
+
+          // Dispatch custom event for header to listen
+          window.dispatchEvent(new CustomEvent("wishlist-updated"))
+
+          return {
+            items: [...state.items, product],
+          }
+        })
+      },
+      remove: async (productId) => {
+        // Simulate network delay for real-world feel
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        set((state) => {
+          // Dispatch custom event for header to listen
+          window.dispatchEvent(new CustomEvent("wishlist-updated"))
+
+          return {
+            items: state.items.filter((item) => item.id !== productId),
+          }
+        })
+      },
+      clear: async () => {
+        // Simulate network delay for real-world feel
+        await new Promise((resolve) => setTimeout(resolve, 300))
+
+        // Dispatch custom event for header to listen
+        window.dispatchEvent(new CustomEvent("wishlist-updated"))
+
+        set({ items: [] })
+      },
+      isInWishlist: (productId) => {
+        return get().items.some((item) => item.id === productId)
+      },
+      getCount: () => {
+        return get().items.length
+      },
+    }),
+    {
+      name: "wishlist-storage", // unique name for localStorage
+    },
+  ),
+)
+
 export function useWishlist() {
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [mounted, setMounted] = useState(false)
+  const { items, add, remove, clear, isInWishlist, getCount } = useWishlistStore()
 
-  // Load wishlist from localStorage or API
+  // Ensure hydration
   useEffect(() => {
-    loadWishlist()
+    setMounted(true)
   }, [])
 
-  const loadWishlist = async () => {
-    try {
-      // For now, use localStorage. In production, this would be an API call
-      const saved = localStorage.getItem('wishlist')
-      if (saved) {
-        setWishlistItems(JSON.parse(saved))
-      }
-    } catch (error) {
-      console.error('Error loading wishlist:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const saveWishlist = (items: WishlistItem[]) => {
-    try {
-      localStorage.setItem('wishlist', JSON.stringify(items))
-      setWishlistItems(items)
-      
-      // Trigger custom event for real-time updates
-      window.dispatchEvent(new CustomEvent('wishlistUpdated', { 
-        detail: { items, count: items.length } 
-      }))
-    } catch (error) {
-      console.error('Error saving wishlist:', error)
-    }
-  }
-
-  const addToWishlist = (product: Omit<WishlistItem, 'id' | 'addedAt'>) => {
-    const existingItem = wishlistItems.find(item => item.productId === product.productId)
-    
-    if (!existingItem) {
-      const newItem: WishlistItem = {
-        ...product,
-        id: Date.now(),
-        addedAt: new Date().toISOString(),
-      }
-      const updatedItems = [...wishlistItems, newItem]
-      saveWishlist(updatedItems)
-      return true
-    }
-    
-    return false // Item already in wishlist
-  }
-
-  const removeFromWishlist = (productId: number) => {
-    const updatedItems = wishlistItems.filter(item => item.productId !== productId)
-    saveWishlist(updatedItems)
-  }
-
-  const clearWishlist = () => {
-    saveWishlist([])
-  }
-
-  const isInWishlist = (productId: number) => {
-    return wishlistItems.some(item => item.productId === productId)
-  }
-
-  const getWishlistCount = () => {
-    return wishlistItems.length
-  }
-
-  // Listen for storage changes (for cross-tab sync)
-  useEffect(() => {
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'wishlist' && e.newValue) {
-        setWishlistItems(JSON.parse(e.newValue))
-      }
-    }
-
-    window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
-  }, [])
-
+  // Only return the real values after hydration to avoid hydration mismatch
   return {
-    wishlistItems,
-    loading,
-    addToWishlist,
-    removeFromWishlist,
-    clearWishlist,
-    isInWishlist,
-    getWishlistCount,
-    refreshWishlist: loadWishlist,
+    wishlistItems: mounted ? items : [],
+    addToWishlist: add,
+    removeFromWishlist: remove,
+    clearWishlist: clear,
+    isInWishlist: mounted ? isInWishlist : () => false,
+    getWishlistCount: mounted ? getCount : () => 0,
   }
 }
