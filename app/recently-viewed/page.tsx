@@ -12,6 +12,8 @@ import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
 import Header from "@/app/components/storefront/Header"
 import Footer from "@/app/components/storefront/Footer"
+import { formatCurrency } from "@/lib/currency"
+import ContactForPrice from "@/app/components/ui/contact-for-price"
 
 export default function RecentlyViewedPage() {
   const { getRecentProducts, removeProduct, clearAll } = useRecentlyViewed()
@@ -259,9 +261,15 @@ export default function RecentlyViewedPage() {
 
                       {/* Price */}
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="font-bold text-green-600 text-lg">${product.price}</span>
-                        {product.originalPrice && (
-                          <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                        {product.price > 0 ? (
+                          <>
+                            <span className="font-bold text-green-600 text-lg">{formatCurrency(product.price)}</span>
+                            {product.originalPrice && (
+                              <span className="text-sm text-gray-500 line-through">{formatCurrency(product.originalPrice)}</span>
+                            )}
+                          </>
+                        ) : (
+                          <ContactForPrice productName={product.name} />
                         )}
                       </div>
 

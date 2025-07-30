@@ -8,6 +8,8 @@ import { ArrowLeft, Grid, List, Star, ShoppingCart, Globe, Mail, Phone } from "l
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
+import { formatCurrency } from "@/lib/currency"
+import ContactForPrice from "@/app/components/ui/contact-for-price"
 
 interface Product {
   id: number
@@ -84,13 +86,6 @@ export default function BrandPage({ params }: BrandPageProps) {
 
     fetchBrandAndProducts()
   }, [resolvedParams])
-
-  const formatPrice = (price: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(price)
-  }
 
   const sortedProducts = products.sort((a, b) => {
     switch (sortBy) {
@@ -281,9 +276,13 @@ export default function BrandPage({ params }: BrandPageProps) {
                             </p>
                           )}
                           <div className="flex items-center justify-between">
-                            <span className="text-lg font-bold text-blue-600">
-                              {formatPrice(product.price, product.currency)}
-                            </span>
+                            {product.price > 0 ? (
+                              <span className="text-lg font-bold text-blue-600">
+                                {formatCurrency(product.price)}
+                              </span>
+                            ) : (
+                              <ContactForPrice productName={product.name} />
+                            )}
                             <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
                               View Details
                             </Button>
@@ -322,9 +321,15 @@ export default function BrandPage({ params }: BrandPageProps) {
                               )}
                             </div>
                             <div className="text-right ml-4">
-                              <div className="text-lg font-bold text-blue-600 mb-2">
-                                {formatPrice(product.price, product.currency)}
-                              </div>
+                              {product.price > 0 ? (
+                                <div className="text-lg font-bold text-blue-600 mb-2">
+                                  {formatCurrency(product.price)}
+                                </div>
+                              ) : (
+                                <div className="mb-2">
+                                  <ContactForPrice productName={product.name} />
+                                </div>
+                              )}
                               <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
                                 View Details
                               </Button>

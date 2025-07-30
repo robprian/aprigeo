@@ -15,6 +15,7 @@ import { Package, ArrowLeft, CheckCircle, Clock, XCircle, FileText, Camera, Truc
 import Image from "next/image"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { formatCurrency } from "@/lib/currency"
 
 interface ReturnItem {
   id: string
@@ -127,13 +128,6 @@ export default function ReturnSystem() {
       month: "long",
       day: "numeric",
     })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
   }
 
   const getStatusBadge = (status: string) => {

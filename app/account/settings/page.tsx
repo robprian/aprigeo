@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { User, Lock, MapPin, Bell, CreditCard, Eye, EyeOff } from "lucide-react"
+import { formatCurrency } from "@/lib/currency"
 
 export default function AccountSettingsPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -354,7 +355,7 @@ export default function AccountSettingsPage() {
                       <p className="text-sm text-gray-600">January 15, 2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">$15,999.00</p>
+                      <p className="font-medium">{formatCurrency(239985000)}</p>
                       <Button variant="outline" size="sm">
                         Download
                       </Button>
@@ -367,7 +368,7 @@ export default function AccountSettingsPage() {
                       <p className="text-sm text-gray-600">January 20, 2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">$28,999.00</p>
+                      <p className="font-medium">{formatCurrency(434985000)}</p>
                       <Button variant="outline" size="sm">
                         Download
                       </Button>
@@ -380,7 +381,7 @@ export default function AccountSettingsPage() {
                       <p className="text-sm text-gray-600">January 25, 2024</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">$2,598.00</p>
+                      <p className="font-medium">{formatCurrency(38970000)}</p>
                       <Button variant="outline" size="sm">
                         Download
                       </Button>

@@ -36,7 +36,7 @@ export default function ShippingPolicyPage() {
             <h2 className="text-2xl font-bold mb-4">Shipping Costs</h2>
             <p className="text-gray-600 mb-4">
               Shipping costs are calculated based on the weight, size, and destination of your order. Free shipping is
-              available on orders over $100.
+              available on orders over Rp 1,500,000.
             </p>
           </section>
 

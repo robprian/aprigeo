@@ -7,6 +7,8 @@ import Link from "next/link"
 import { ArrowLeft, Grid, List, Filter, SortAsc, Star, ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { formatCurrency } from "@/lib/currency"
+import ContactForPrice from "@/app/components/ui/contact-for-price"
 
 interface Product {
   id: number
@@ -82,13 +84,6 @@ export default function CategoryPage({ params }: CategoryPageProps) {
 
     fetchCategoryAndProducts()
   }, [resolvedParams])
-
-  const formatPrice = (price: number, currency: string = 'USD') => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency,
-    }).format(price)
-  }
 
   const sortedProducts = products.sort((a, b) => {
     switch (sortBy) {
@@ -175,9 +170,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
               onChange={(e) => setSortBy(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-md text-sm"
             >
-              <option value="name">Sort by Name</option>
-              <option value="price_low">Price: Low to High</option>
-              <option value="price_high">Price: High to Low</option>
+              <option value="name">Urutkan berdasarkan Nama</option>
+              <option value="price_low">Harga: Rendah ke Tinggi</option>
+              <option value="price_high">Harga: Tinggi ke Rendah</option>
             </select>
 
             {/* View Toggle */}
@@ -259,9 +254,13 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                         </p>
                       )}
                       <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-blue-600">
-                          {formatPrice(product.price, product.currency)}
-                        </span>
+                        {product.price > 0 ? (
+                          <span className="text-lg font-bold text-blue-600">
+                            {formatCurrency(product.price)}
+                          </span>
+                        ) : (
+                          <ContactForPrice productName={product.name} />
+                        )}
                         <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
                           View Details
                         </Button>
@@ -300,9 +299,15 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                           )}
                         </div>
                         <div className="text-right ml-4">
-                          <div className="text-lg font-bold text-blue-600 mb-2">
-                            {formatPrice(product.price, product.currency)}
-                          </div>
+                          {product.price > 0 ? (
+                            <div className="text-lg font-bold text-blue-600 mb-2">
+                              {formatCurrency(product.price)}
+                            </div>
+                          ) : (
+                            <div className="mb-2">
+                              <ContactForPrice productName={product.name} />
+                            </div>
+                          )}
                           <Button size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
                             View Details
                           </Button>

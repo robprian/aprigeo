@@ -363,7 +363,7 @@ function ProductPageClient({ slug }: { slug: string }) {
             <div className="prose max-w-none">
               <h3>Shipping Information</h3>
               <ul>
-                <li>Free shipping on orders over $50</li>
+                <li>Gratis ongkir untuk pembelian di atas Rp 750.000</li>
                 <li>Standard delivery: 3-5 business days</li>
                 <li>Express delivery: 1-2 business days (additional charges apply)</li>
                 <li>International shipping available</li>

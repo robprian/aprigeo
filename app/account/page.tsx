@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ShoppingBag, Heart, Package, CreditCard, Settings } from "lucide-react"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/currency"
 
 export default function AccountDashboard() {
   return (
@@ -65,7 +66,7 @@ export default function AccountDashboard() {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Total Spent</p>
-                <p className="text-2xl font-bold text-gray-900">$89,450</p>
+                <p className="text-2xl font-bold text-gray-900">{formatCurrency(1341750000)}</p>
               </div>
             </div>
           </CardContent>
@@ -93,7 +94,7 @@ export default function AccountDashboard() {
                 <p className="text-xs text-gray-500">Ordered on Jan 15, 2024</p>
               </div>
               <div className="text-right">
-                <p className="font-medium">$15,999</p>
+                <p className="font-medium">{formatCurrency(239985000)}</p>
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
                   Delivered
                 </span>
@@ -107,7 +108,7 @@ export default function AccountDashboard() {
                 <p className="text-xs text-gray-500">Ordered on Jan 20, 2024</p>
               </div>
               <div className="text-right">
-                <p className="font-medium">$28,999</p>
+                <p className="font-medium">{formatCurrency(434985000)}</p>
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
                   Shipped
                 </span>
@@ -121,7 +122,7 @@ export default function AccountDashboard() {
                 <p className="text-xs text-gray-500">Ordered on Jan 25, 2024</p>
               </div>
               <div className="text-right">
-                <p className="font-medium">$1,299</p>
+                <p className="font-medium">{formatCurrency(19485000)}</p>
                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
                   Processing
                 </span>

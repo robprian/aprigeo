@@ -18,6 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { generateInvoice } from "@/app/components/account/InvoiceGenerator"
 import ReviewModal from "@/app/components/account/ReviewModal"
+import { formatCurrency } from "@/lib/currency"
 
 // Mock order data
 const orders = [
@@ -25,12 +26,12 @@ const orders = [
     id: "ORD-2024-001",
     date: "2024-01-15",
     status: "delivered",
-    total: 15999,
+    total: 239985000, // ~$15,999 * 15,000
     items: [
       {
         id: 1,
         name: "Trimble R12i GNSS Receiver",
-        price: 15999,
+        price: 239985000,
         quantity: 1,
         image: "/placeholder.svg?height=80&width=80",
       },
@@ -46,17 +47,17 @@ const orders = [
     payment: {
       method: "Credit Card",
       last4: "4242",
-      subtotal: 15999,
+      subtotal: 239985000,
       shipping: 0,
-      tax: 1280,
-      total: 17279,
+      tax: 19200000, // ~8% tax
+      total: 259185000,
     },
   },
   {
     id: "ORD-2024-002",
     date: "2024-01-20",
     status: "shipped",
-    total: 28999,
+    total: 434985000, // ~$28,999 * 15,000
     items: [
       {
         id: 2,
@@ -178,13 +179,6 @@ export default function OrderHistoryPage() {
       month: "long",
       day: "numeric",
     })
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount)
   }
 
   const renderTrackingInfo = () => {
