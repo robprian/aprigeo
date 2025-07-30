@@ -11,6 +11,7 @@ import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
 import { useMobile } from "@/hooks/use-mobile"
 import { toast } from "sonner"
+import { formatCurrency } from "@/lib/currency"
 
 interface Product {
   id: number
@@ -171,9 +172,9 @@ export default function ProductQuickView({ product, isOpen, onClose }: ProductQu
 
               {/* Price */}
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
+                <span className="text-2xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
                 {product.originalPrice && (
-                  <span className="text-lg text-gray-500 line-through">${product.originalPrice.toFixed(2)}</span>
+                  <span className="text-lg text-gray-500 line-through">{formatCurrency(product.originalPrice)}</span>
                 )}
               </div>
 

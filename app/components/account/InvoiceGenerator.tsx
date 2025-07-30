@@ -1,4 +1,5 @@
-import { jsPDF } from "jspdf"
+import jsPDF from 'jspdf'
+import { formatCurrency } from '@/lib/currency'
 
 interface InvoiceData {
   order: {
@@ -148,8 +149,8 @@ export const generateInvoice = async (data: InvoiceData) => {
     const itemTotal = item.price * item.quantity
     doc.text(item.name.substring(0, 35), 20, yPosition)
     doc.text(item.quantity.toString(), 125, yPosition)
-    doc.text(`$${item.price.toLocaleString()}`, 145, yPosition)
-    doc.text(`$${itemTotal.toLocaleString()}`, 175, yPosition)
+    doc.text(formatCurrency(item.price), 145, yPosition)
+    doc.text(formatCurrency(itemTotal), 175, yPosition)
     yPosition += 10
   })
 
@@ -163,15 +164,15 @@ export const generateInvoice = async (data: InvoiceData) => {
   doc.setFontSize(10)
   doc.setFont("helvetica", "normal")
   doc.text("Subtotal:", 130, yPosition)
-  doc.text(`$${order.payment.subtotal.toLocaleString()}`, 175, yPosition)
+  doc.text(formatCurrency(order.payment.subtotal), 175, yPosition)
   yPosition += 8
 
   doc.text("Shipping:", 130, yPosition)
-  doc.text(`$${order.payment.shipping.toLocaleString()}`, 175, yPosition)
+  doc.text(formatCurrency(order.payment.shipping), 175, yPosition)
   yPosition += 8
 
   doc.text("Tax:", 130, yPosition)
-  doc.text(`$${order.payment.tax.toLocaleString()}`, 175, yPosition)
+  doc.text(formatCurrency(order.payment.tax), 175, yPosition)
   yPosition += 10
 
   // Total with background
@@ -181,7 +182,7 @@ export const generateInvoice = async (data: InvoiceData) => {
   doc.setFont("helvetica", "bold")
   doc.setTextColor(255, 255, 255)
   doc.text("TOTAL:", 130, yPosition)
-  doc.text(`$${order.payment.total.toLocaleString()}`, 175, yPosition)
+  doc.text(formatCurrency(order.payment.total), 175, yPosition)
 
   // Payment Information with styling
   yPosition += 25

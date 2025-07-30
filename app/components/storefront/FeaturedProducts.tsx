@@ -70,7 +70,7 @@ export default function FeaturedProducts() {
                   </div>
 
                   <div className="flex items-center justify-between mb-4">
-                    {product.price && product.price > 0 ? (
+                    {product.price > 0 ? (
                       <div>
                         <span className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
                         {product.compare_price && (
@@ -89,7 +89,7 @@ export default function FeaturedProducts() {
                     )}
                   </div>
 
-                  {product.price && product.price > 0 && (
+                  {product.price > 0 && (
                     <Button className="w-full bg-green-600 hover:bg-green-700">
                       <ShoppingCart className="w-4 h-4 mr-2" />
                       Add to Cart

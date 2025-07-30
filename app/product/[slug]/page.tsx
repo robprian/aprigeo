@@ -217,7 +217,7 @@ function ProductPageClient({ slug }: { slug: string }) {
           </div>
 
           {/* Price */}
-          {product.price && product.price > 0 ? (
+          {product.price > 0 ? (
             <div className="flex items-center space-x-2">
               <span className="text-3xl font-bold text-green-600">
                 {formatCurrency(product.price)}
@@ -264,7 +264,7 @@ function ProductPageClient({ slug }: { slug: string }) {
           </div>
 
           {/* Quantity and Add to Cart */}
-          {product.stock > 0 && product.price && product.price > 0 && (
+          {product.stock > 0 && product.price > 0 && (
             <div className="flex items-center space-x-4">
               <div className="flex items-center border rounded-lg">
                 <button
@@ -293,7 +293,7 @@ function ProductPageClient({ slug }: { slug: string }) {
 
           {/* Action Buttons */}
           <div className="flex space-x-4">
-            {product.price && product.price > 0 ? (
+            {product.price > 0 ? (
               <>
                 <Button variant="outline" onClick={handleToggleWishlist}>
                   <Heart className={`w-5 h-5 mr-2 ${isInWishlist(product.id) ? 'fill-current text-red-500' : ''}`} />

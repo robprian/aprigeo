@@ -216,7 +216,7 @@ export default function ProductCard({ product, onQuickView, className = "" }: Pr
 
           {/* Price */}
           <div className="flex items-center">
-            {product.price && product.price > 0 ? (
+            {product.price > 0 ? (
               <>
                 <span className="text-base font-semibold text-gray-900">{formatCurrency(product.price)}</span>
                 {product.originalPrice && (

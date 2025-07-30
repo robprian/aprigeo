@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
 import { Filter } from "lucide-react"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { formatCurrency } from "@/lib/currency"
 
 interface FilterSidebarProps {
   categories: string[]
@@ -88,8 +89,8 @@ export default function FilterSidebar({
           className="mb-3"
         />
         <div className="flex justify-between text-sm text-gray-600">
-          <span>${selectedPriceRange[0].toLocaleString()}</span>
-          <span>${selectedPriceRange[1].toLocaleString()}</span>
+          <span>{formatCurrency(selectedPriceRange[0] * 15000)}</span>
+          <span>{formatCurrency(selectedPriceRange[1] * 15000)}</span>
         </div>
       </div>
 
