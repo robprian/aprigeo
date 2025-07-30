@@ -12,6 +12,7 @@ import { useWishlist } from "@/hooks/useWishlist"
 import { useCompare } from "@/hooks/useCompare"
 import { toast } from "@/lib/toast"
 import { formatCurrency } from "@/lib/currency"
+import ContactForPrice from "@/app/components/ui/contact-for-price"
 import SocialShare from "@/app/components/storefront/SocialShare"
 import RecentlyViewedProducts from "@/app/components/storefront/RecentlyViewedProducts"
 
@@ -216,16 +217,25 @@ function ProductPageClient({ slug }: { slug: string }) {
           </div>
 
           {/* Price */}
-          <div className="flex items-center space-x-2">
-            <span className="text-3xl font-bold text-green-600">
-              {formatCurrency(product.price)}
-            </span>
-            {product.original_price && product.original_price > product.price && (
-              <span className="text-xl text-gray-500 line-through">
-                {formatCurrency(product.original_price)}
+          {product.price && product.price > 0 ? (
+            <div className="flex items-center space-x-2">
+              <span className="text-3xl font-bold text-green-600">
+                {formatCurrency(product.price)}
               </span>
-            )}
-          </div>
+              {product.original_price && product.original_price > product.price && (
+                <span className="text-xl text-gray-500 line-through">
+                  {formatCurrency(product.original_price)}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="mb-6">
+              <ContactForPrice 
+                productName={product.name}
+                className="max-w-md"
+              />
+            </div>
+          )}
 
           {/* Description */}
           <div>
@@ -254,7 +264,7 @@ function ProductPageClient({ slug }: { slug: string }) {
           </div>
 
           {/* Quantity and Add to Cart */}
-          {product.stock > 0 && (
+          {product.stock > 0 && product.price && product.price > 0 && (
             <div className="flex items-center space-x-4">
               <div className="flex items-center border rounded-lg">
                 <button
@@ -283,14 +293,22 @@ function ProductPageClient({ slug }: { slug: string }) {
 
           {/* Action Buttons */}
           <div className="flex space-x-4">
-            <Button variant="outline" onClick={handleToggleWishlist}>
-              <Heart className={`w-5 h-5 mr-2 ${isInWishlist(product.id) ? 'fill-current text-red-500' : ''}`} />
-              {isInWishlist(product.id) ? 'In Wishlist' : 'Add to Wishlist'}
-            </Button>
-            
-            <Button variant="outline" onClick={handleAddToCompare}>
-              Compare
-            </Button>
+            {product.price && product.price > 0 ? (
+              <>
+                <Button variant="outline" onClick={handleToggleWishlist}>
+                  <Heart className={`w-5 h-5 mr-2 ${isInWishlist(product.id) ? 'fill-current text-red-500' : ''}`} />
+                  {isInWishlist(product.id) ? 'In Wishlist' : 'Add to Wishlist'}
+                </Button>
+                
+                <Button variant="outline" onClick={handleAddToCompare}>
+                  Compare
+                </Button>
+              </>
+            ) : (
+              <div className="text-sm text-gray-600">
+                Hubungi kami untuk informasi lebih lanjut tentang produk ini
+              </div>
+            )}
             
             <SocialShare 
               url={`${window.location.origin}/product/${product.slug}`}

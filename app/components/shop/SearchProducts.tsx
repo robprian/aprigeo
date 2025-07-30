@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/hooks/use-debounce"
 import Image from "next/image"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/currency"
 
 interface Product {
   id: number
@@ -123,7 +124,7 @@ export default function SearchProducts({
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-sm text-gray-900 truncate">{product.name}</div>
                   <div className="text-xs text-gray-500">
-                    {product.category} • ${product.price.toFixed(2)}
+                    {product.category} • {formatCurrency(product.price)}
                   </div>
                 </div>
               </button>

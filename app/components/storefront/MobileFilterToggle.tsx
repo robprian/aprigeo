@@ -7,6 +7,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Slider } from "@/components/ui/slider"
+import { formatCurrency } from "@/lib/currency"
 
 const categories = ["GPS Receivers", "Total Stations", "Theodolites", "Laser Levels", "Measuring Tools", "Accessories"]
 const brands = ["Trimble", "Leica", "Topcon", "Sokkia", "Garmin", "Spectra"]
@@ -142,8 +143,8 @@ function MobileFilterToggle({ onFiltersChange }: MobileFilterToggleProps) {
             <h4 className="font-medium mb-3">Price Range</h4>
             <Slider value={priceRange} onValueChange={handlePriceChange} max={50000} step={100} className="mb-3" />
             <div className="flex justify-between text-sm text-gray-600">
-              <span>${priceRange[0].toLocaleString()}</span>
-              <span>${priceRange[1].toLocaleString()}</span>
+              <span>{formatCurrency(priceRange[0] * 15000)}</span>
+              <span>{formatCurrency(priceRange[1] * 15000)}</span>
             </div>
           </div>
 

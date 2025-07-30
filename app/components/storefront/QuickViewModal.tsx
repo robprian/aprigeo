@@ -163,10 +163,10 @@ export default function QuickViewModal({ product, isOpen, onClose }: QuickViewMo
                 {/* Price */}
                 <div className="flex items-center gap-2">
                   <span className={`font-bold text-green-600 ${isMobile ? "text-lg" : "text-xl"}`}>
-                    ${product.price.toLocaleString()}
+                    {formatCurrency(product.price)}
                   </span>
                   {product.originalPrice && (
-                    <span className="text-gray-500 line-through">${product.originalPrice.toLocaleString()}</span>
+                    <span className="text-gray-500 line-through">{formatCurrency(product.originalPrice)}</span>
                   )}
                 </div>
 

@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation'
 import Header from "@/app/components/storefront/Header"
 import Footer from "@/app/components/storefront/Footer"
+import FloatingContact from "@/app/components/ui/floating-contact"
 
 interface ClientLayoutWrapperProps {
   children: React.ReactNode
@@ -14,7 +15,11 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
   // Pages that should not show header and footer
   const noLayoutPages = ['/admin/login']
   
+  // Pages that should not show floating contact
+  const noFloatingContactPages = ['/admin', '/checkout', '/login']
+  
   const shouldShowLayout = !noLayoutPages.includes(pathname)
+  const shouldShowFloatingContact = !noFloatingContactPages.some(page => pathname.startsWith(page))
   
   if (!shouldShowLayout) {
     return <>{children}</>
@@ -25,6 +30,12 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
       <Header />
       <main className="flex-grow">{children}</main>
       <Footer />
+      {shouldShowFloatingContact && (
+        <FloatingContact 
+          whatsappNumber="6281234567890"
+          companyName="CV. Aprinia Geosat Solusindo"
+        />
+      )}
     </div>
   )
 }

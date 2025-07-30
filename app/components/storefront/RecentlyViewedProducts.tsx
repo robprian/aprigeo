@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed"
 import { useCart } from "@/hooks/useCart"
 import { useWishlist } from "@/hooks/useWishlist"
+import { formatCurrency } from "@/lib/currency"
 
 interface RecentlyViewedProductsProps {
   limit?: number
@@ -238,9 +239,9 @@ export default function RecentlyViewedProducts({
 
                   {/* Price */}
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-green-600">${product.price}</span>
+                    <span className="font-bold text-green-600">{formatCurrency(product.price)}</span>
                     {product.originalPrice && (
-                      <span className="text-sm text-gray-500 line-through">${product.originalPrice}</span>
+                      <span className="text-sm text-gray-500 line-through">{formatCurrency(product.originalPrice)}</span>
                     )}
                   </div>
 

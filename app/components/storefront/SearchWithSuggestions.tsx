@@ -9,6 +9,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { searchProducts } from "@/lib/meilisearch"
 import { useDebounce } from "@/hooks/use-debounce"
+import { formatCurrency } from "@/lib/currency"
 
 interface Product {
   id: number
@@ -162,7 +163,7 @@ export default function SearchWithSuggestions({
                     <h4 className="text-sm font-medium text-gray-900">{product.name}</h4>
                     <p className="text-xs text-gray-500">{product.category || product.brand}</p>
                   </div>
-                  <span className="text-sm font-medium text-green-600">${product.price.toLocaleString()}</span>
+                  <span className="text-sm font-medium text-green-600">{formatCurrency(product.price)}</span>
                 </Link>
               ))}
             </div>

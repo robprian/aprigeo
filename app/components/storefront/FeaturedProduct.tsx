@@ -8,6 +8,7 @@ import { ShoppingCart, Star } from "lucide-react"
 import { useFeaturedProducts } from "@/hooks/useProducts"
 import { useCart } from "@/hooks/useCart"
 import { toast } from "@/hooks/use-toast"
+import { formatCurrency } from "@/lib/currency"
 
 export default function FeaturedProduct() {
   const [quantity, setQuantity] = useState(1)
@@ -100,10 +101,10 @@ export default function FeaturedProduct() {
 
           <div className="mb-6">
             <div className="flex items-center">
-              <span className="text-3xl font-bold text-green-600">${featuredProduct.price?.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-green-600">{formatCurrency(featuredProduct.price)}</span>
               {featuredProduct.compare_price && (
                 <span className="ml-3 text-xl text-gray-400 line-through">
-                  ${featuredProduct.compare_price.toFixed(2)}
+                  {formatCurrency(featuredProduct.compare_price)}
                 </span>
               )}
             </div>

@@ -4,6 +4,7 @@ import { Star, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import { useFeaturedProducts } from "@/hooks/useProducts"
 import { formatCurrency } from "@/lib/currency"
+import ContactForPrice from "@/app/components/ui/contact-for-price"
 
 export default function FeaturedProducts() {
   const { products, isLoading } = useFeaturedProducts()
@@ -69,20 +70,31 @@ export default function FeaturedProducts() {
                   </div>
 
                   <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <span className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
-                      {product.compare_price && (
-                        <span className="text-sm text-gray-500 line-through ml-2">
-                          {formatCurrency(product.compare_price)}
-                        </span>
-                      )}
-                    </div>
+                    {product.price && product.price > 0 ? (
+                      <div>
+                        <span className="text-xl font-bold text-gray-900">{formatCurrency(product.price)}</span>
+                        {product.compare_price && (
+                          <span className="text-sm text-gray-500 line-through ml-2">
+                            {formatCurrency(product.compare_price)}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="w-full">
+                        <ContactForPrice 
+                          productName={product.name}
+                          className="text-sm"
+                        />
+                      </div>
+                    )}
                   </div>
 
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
-                  </Button>
+                  {product.price && product.price > 0 && (
+                    <Button className="w-full bg-green-600 hover:bg-green-700">
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Add to Cart
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
