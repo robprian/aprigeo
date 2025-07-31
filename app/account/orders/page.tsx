@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -20,142 +20,80 @@ import { generateInvoice } from "@/app/components/account/InvoiceGenerator"
 import ReviewModal from "@/app/components/account/ReviewModal"
 import { formatCurrency } from "@/lib/currency"
 
-// Mock order data
-const orders = [
-  {
-    id: "ORD-2024-001",
-    date: "2024-01-15",
-    status: "delivered",
-    total: 239985000, // ~$15,999 * 15,000
-    items: [
-      {
-        id: 1,
-        name: "Trimble R12i GNSS Receiver",
-        price: 239985000,
-        quantity: 1,
-        image: "/placeholder.svg?height=80&width=80",
-      },
-    ],
-    shipping: {
-      address: "123 Main St, Anytown, ST 12345",
-      method: "Express Shipping",
-      tracking: "TRK123456789",
-      carrier: "FedEx",
-      estimatedDelivery: "2024-01-18",
-      deliveredDate: "2024-01-17",
-    },
-    payment: {
-      method: "Credit Card",
-      last4: "4242",
-      subtotal: 239985000,
-      shipping: 0,
-      tax: 19200000, // ~8% tax
-      total: 259185000,
-    },
-  },
-  {
-    id: "ORD-2024-002",
-    date: "2024-01-20",
-    status: "shipped",
-    total: 434985000, // ~$28,999 * 15,000
-    items: [
-      {
-        id: 2,
-        name: "Leica TS16 Total Station",
-        price: 28999,
-        quantity: 1,
-        image: "/placeholder.svg?height=80&width=80",
-      },
-    ],
-    shipping: {
-      address: "123 Main St, Anytown, ST 12345",
-      method: "Standard Shipping",
-      tracking: "TRK987654321",
-      carrier: "UPS",
-      estimatedDelivery: "2024-01-27",
-    },
-    payment: {
-      method: "Credit Card",
-      last4: "5555",
-      subtotal: 28999,
-      shipping: 0,
-      tax: 2320,
-      total: 31319,
-    },
-  },
-  {
-    id: "ORD-2024-003",
-    date: "2024-01-25",
-    status: "processing",
-    total: 2598,
-    items: [
-      {
-        id: 4,
-        name: "Iridium 9575 Satellite Phone",
-        price: 1299,
-        quantity: 2,
-        image: "/placeholder.svg?height=80&width=80",
-      },
-    ],
-    shipping: {
-      address: "123 Main St, Anytown, ST 12345",
-      method: "Standard Shipping",
-      tracking: null,
-      estimatedDelivery: "2024-02-01",
-    },
-    payment: {
-      method: "PayPal",
-      email: "john.doe@example.com",
-      subtotal: 2598,
-      shipping: 15,
-      tax: 208,
-      total: 2821,
-    },
-  },
-  {
-    id: "ORD-2024-004",
-    date: "2024-01-10",
-    status: "cancelled",
-    total: 899,
-    items: [
-      {
-        id: 5,
-        name: "Spectra Precision Laser Level",
-        price: 899,
-        quantity: 1,
-        image: "/placeholder.svg?height=80&width=80",
-      },
-    ],
-    shipping: {
-      address: "123 Main St, Anytown, ST 12345",
-      method: "Standard Shipping",
-      tracking: null,
-    },
-    payment: {
-      method: "Credit Card",
-      last4: "4242",
-      subtotal: 899,
-      shipping: 15,
-      tax: 72,
-      total: 986,
-    },
-    cancellationReason: "Changed mind",
-  },
-]
+interface OrderItem {
+  id: number
+  name: string
+  slug: string
+  price: number
+  quantity: number
+  total: number
+  image: string
+}
+
+interface Order {
+  id: string
+  date: string
+  status: string
+  total: number
+  items: OrderItem[]
+  shipping: {
+    address: string
+    method: string
+    tracking?: string | null
+    carrier?: string | null
+    estimatedDelivery?: string | null
+    deliveredDate?: string | null
+  }
+  payment: {
+    method: string
+    last4?: string | null
+    email?: string | null
+    subtotal: number
+    shipping: number
+    tax: number
+    total: number
+  }
+  cancellationReason?: string
+}
 
 const statusConfig = {
-  processing: { label: "Processing", color: "bg-yellow-100 text-yellow-800", icon: Clock },
-  shipped: { label: "Shipped", color: "bg-blue-100 text-blue-800", icon: Truck },
-  delivered: { label: "Delivered", color: "bg-green-100 text-green-800", icon: CheckCircle },
-  cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800", icon: Package },
+  processing: { label: "Memproses", color: "bg-yellow-100 text-yellow-800", icon: Clock },
+  shipped: { label: "Dikirim", color: "bg-blue-100 text-blue-800", icon: Truck },
+  delivered: { label: "Diterima", color: "bg-green-100 text-green-800", icon: CheckCircle },
+  cancelled: { label: "Dibatalkan", color: "bg-red-100 text-red-800", icon: Package },
+  pending: { label: "Menunggu", color: "bg-gray-100 text-gray-800", icon: Clock },
+  confirmed: { label: "Dikonfirmasi", color: "bg-blue-100 text-blue-800", icon: CheckCircle },
 }
 
 export default function OrderHistoryPage() {
-  const [selectedOrder, setSelectedOrder] = useState<any>(null)
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isOrderDetailsOpen, setIsOrderDetailsOpen] = useState(false)
   const [isTrackingOpen, setIsTrackingOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        // For demo purposes, using user_id = 1. In real app, get from auth context
+        const response = await fetch('/api/orders?user_id=1')
+        if (response.ok) {
+          const data = await response.json()
+          setOrders(data.data || [])
+        } else {
+          console.error('Failed to fetch orders')
+        }
+      } catch (error) {
+        console.error('Error fetching orders:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchOrders()
+  }, [])
 
   const getStatusIcon = (status: string) => {
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -187,37 +125,38 @@ export default function OrderHistoryPage() {
     const { shipping, status } = selectedOrder
     const { tracking, carrier, estimatedDelivery, deliveredDate } = shipping
 
-    // Mock tracking events
+    // Mock tracking events - in real app, this would come from shipping API
+    const defaultDeliveryDate = estimatedDelivery || new Date().toISOString()
     const trackingEvents = [
       {
         status: "Delivered",
         date: deliveredDate || new Date().toISOString(),
-        location: "Anytown, ST",
-        description: "Package delivered",
+        location: "Jakarta, ID",
+        description: "Paket telah diterima",
       },
       {
         status: "Out for Delivery",
-        date: new Date(new Date(estimatedDelivery).getTime() - 86400000).toISOString(),
-        location: "Anytown, ST",
-        description: "Package is out for delivery",
+        date: new Date(new Date(defaultDeliveryDate).getTime() - 86400000).toISOString(),
+        location: "Jakarta, ID",
+        description: "Paket sedang dalam perjalanan pengiriman",
       },
       {
         status: "Arrived at Local Facility",
-        date: new Date(new Date(estimatedDelivery).getTime() - 172800000).toISOString(),
-        location: "Anytown, ST",
-        description: "Package has arrived at local facility",
+        date: new Date(new Date(defaultDeliveryDate).getTime() - 172800000).toISOString(),
+        location: "Jakarta, ID",
+        description: "Paket telah tiba di fasilitas lokal",
       },
       {
         status: "In Transit",
-        date: new Date(new Date(estimatedDelivery).getTime() - 259200000).toISOString(),
+        date: new Date(new Date(defaultDeliveryDate).getTime() - 259200000).toISOString(),
         location: "Distribution Center",
-        description: "Package is in transit",
+        description: "Paket sedang dalam perjalanan",
       },
       {
         status: "Shipped",
-        date: new Date(new Date(estimatedDelivery).getTime() - 345600000).toISOString(),
+        date: new Date(new Date(defaultDeliveryDate).getTime() - 345600000).toISOString(),
         location: "Shipping Origin",
-        description: "Package has been shipped",
+        description: "Paket telah dikirim",
       },
     ]
 
@@ -289,11 +228,32 @@ export default function OrderHistoryPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Order History</h1>
-        <p className="text-gray-600 mt-1">Track and manage your orders</p>
+        <h1 className="text-2xl font-bold text-gray-900">Riwayat Pesanan</h1>
+        <p className="text-gray-600 mt-1">Lacak dan kelola pesanan Anda</p>
       </div>
 
-      <div className="space-y-6">
+      {loading ? (
+        <div className="space-y-6">
+          {[...Array(3)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="h-5 bg-gray-300 rounded w-32 mb-2"></div>
+                    <div className="h-4 bg-gray-300 rounded w-24"></div>
+                  </div>
+                  <div className="h-6 bg-gray-300 rounded w-20"></div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-16 bg-gray-300 rounded mb-4"></div>
+                <div className="h-4 bg-gray-300 rounded w-full"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-6">
         {orders.map((order) => (
           <Card key={order.id}>
             <CardHeader>
@@ -371,7 +331,16 @@ export default function OrderHistoryPage() {
                     <Eye className="w-4 h-4 mr-1" />
                     View Details
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => generateInvoice({ order })}>
+                  <Button variant="outline" size="sm" onClick={() => generateInvoice({ 
+                    order: {
+                      ...order,
+                      payment: {
+                        ...order.payment,
+                        last4: order.payment.last4 || undefined,
+                        email: order.payment.email || undefined
+                      }
+                    }
+                  })}>
                     <Download className="w-4 h-4 mr-1" />
                     Download Invoice
                   </Button>
@@ -415,9 +384,10 @@ export default function OrderHistoryPage() {
             </CardContent>
           </Card>
         ))}
-      </div>
+        </div>
+      )}
 
-      {orders.length === 0 && (
+      {!loading && orders.length === 0 && (
         <div className="text-center py-16 bg-gray-50 rounded-lg">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
             <Package className="w-8 h-8 text-gray-400" />
@@ -561,7 +531,16 @@ export default function OrderHistoryPage() {
             <Button variant="outline" onClick={() => setIsOrderDetailsOpen(false)}>
               Close
             </Button>
-            <Button onClick={() => selectedOrder && generateInvoice({ order: selectedOrder })}>
+            <Button onClick={() => selectedOrder && generateInvoice({ 
+              order: {
+                ...selectedOrder,
+                payment: {
+                  ...selectedOrder.payment,
+                  last4: selectedOrder.payment.last4 || undefined,
+                  email: selectedOrder.payment.email || undefined
+                }
+              }
+            })}>
               <Download className="w-4 h-4 mr-1" />
               Download Invoice
             </Button>
