@@ -89,13 +89,13 @@ export async function GET(request: NextRequest) {
         c.slug as category_slug,
         b.name as brand_name,
         b.slug as brand_slug,
-        COALESCE(AVG(pr.rating), 0) as rating,
-        COUNT(pr.id) as reviews,
+        COALESCE(AVG(r.rating), 0) as rating,
+        COUNT(r.id) as reviews,
         COUNT(DISTINCT oi.id) as total_sales
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
-      LEFT JOIN product_reviews pr ON p.id = pr.product_id
+      LEFT JOIN reviews r ON p.id = r.product_id
       LEFT JOIN order_items oi ON p.id = oi.product_id
       ${whereClause}
       GROUP BY p.id, c.name, c.slug, b.name, b.slug

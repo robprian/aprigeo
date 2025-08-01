@@ -1,5 +1,13 @@
 -- Sample orders data for Indonesian ecommerce site
--- Using smaller amounts to fit numeric(10,2) precision (max 99,999,999.99)
+-- First create some users for orders
+
+-- Insert sample users
+INSERT INTO users (
+    email, password_hash, first_name, last_name, phone, role, is_active
+) VALUES 
+('budi@example.com', '$2a$10$XVnB.Sj8QV5Q9bYpzGlQsezpzHcLB6zGQvqoLFHUOYTl3zJ2CjhFO', 'Budi', 'Santoso', '+62812345678', 'customer', true),
+('siti@example.com', '$2a$10$XVnB.Sj8QV5Q9bYpzGlQsezpzHcLB6zGQvqoLFHUOYTl3zJ2CjhFO', 'Siti', 'Nurhaliza', '+62813456789', 'customer', true),
+('agus@example.com', '$2a$10$XVnB.Sj8QV5Q9bYpzGlQsezpzHcLB6zGQvqoLFHUOYTl3zJ2CjhFO', 'Agus', 'Prasetyo', '+62814567890', 'customer', true);
 
 -- Insert sample orders with Indonesian products and IDR amounts
 INSERT INTO orders (
@@ -17,9 +25,9 @@ INSERT INTO orders (
 (2, 'ORD-2024-003', 'processing', 1850000.00, 148000.00, 50000.00, 0.00, 2048000.00, 'IDR', 'paid', 'ewallet', 'standard_shipping',
  '2024-01-25 09:45:00', '2024-01-25 09:45:00');
 
--- Insert order items for each order
+-- Insert order items for each order (using correct column names: price, total)
 INSERT INTO order_items (
-    order_id, product_id, quantity, unit_price, total_price
+    order_id, product_id, quantity, price, total
 ) VALUES 
 -- Order 1 items (GPS devices)
 (1, 1, 1, 1599900.00, 1599900.00), -- GPS Garmin eTrex 32x
@@ -31,25 +39,25 @@ INSERT INTO order_items (
 -- Order 3 items (Survey equipment)  
 (3, 10, 1, 1850000.00, 1850000.00); -- GPS Garmin Montana 700i
 
--- Insert shipping addresses for orders
+-- Insert shipping addresses for orders (without email column)
 INSERT INTO order_addresses (
-    order_id, type, first_name, last_name, phone, email,
+    order_id, type, first_name, last_name, phone,
     address_line_1, address_line_2, city, state, postal_code, country
 ) VALUES 
-(1, 'shipping', 'Budi', 'Santoso', '+62812345678', 'budi@example.com',
+(1, 'shipping', 'Budi', 'Santoso', '+62812345678',
  'Jl. Sudirman No. 123', 'Gedung Plaza Indonesia', 'Jakarta Pusat', 'DKI Jakarta', '10220', 'Indonesia'),
 
-(1, 'billing', 'Budi', 'Santoso', '+62812345678', 'budi@example.com',
+(1, 'billing', 'Budi', 'Santoso', '+62812345678',
  'Jl. Sudirman No. 123', 'Gedung Plaza Indonesia', 'Jakarta Pusat', 'DKI Jakarta', '10220', 'Indonesia'),
 
-(2, 'shipping', 'Siti', 'Nurhaliza', '+62813456789', 'siti@example.com',
+(2, 'shipping', 'Siti', 'Nurhaliza', '+62813456789',
  'Jl. Malioboro No. 45', '', 'Yogyakarta', 'DI Yogyakarta', '55271', 'Indonesia'),
 
-(2, 'billing', 'Siti', 'Nurhaliza', '+62813456789', 'siti@example.com',
+(2, 'billing', 'Siti', 'Nurhaliza', '+62813456789',
  'Jl. Malioboro No. 45', '', 'Yogyakarta', 'DI Yogyakarta', '55271', 'Indonesia'),
 
-(3, 'shipping', 'Agus', 'Prasetyo', '+62814567890', 'agus@example.com',
+(3, 'shipping', 'Agus', 'Prasetyo', '+62814567890',
  'Jl. Asia Afrika No. 78', 'Kompleks Gedung Sate', 'Bandung', 'Jawa Barat', '40111', 'Indonesia'),
 
-(3, 'billing', 'Agus', 'Prasetyo', '+62814567890', 'agus@example.com',
+(3, 'billing', 'Agus', 'Prasetyo', '+62814567890',
  'Jl. Asia Afrika No. 78', 'Kompleks Gedung Sate', 'Bandung', 'Jawa Barat', '40111', 'Indonesia');

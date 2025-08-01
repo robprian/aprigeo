@@ -1,6 +1,7 @@
 "use client"
 
 import { usePathname } from 'next/navigation'
+import { SessionProvider } from "next-auth/react"
 import Header from "@/app/components/storefront/Header"
 import Footer from "@/app/components/storefront/Footer"
 import FloatingContact from "@/app/components/ui/floating-contact"
@@ -22,20 +23,26 @@ export default function ClientLayoutWrapper({ children }: ClientLayoutWrapperPro
   const shouldShowFloatingContact = !noFloatingContactPages.some(page => pathname.startsWith(page))
   
   if (!shouldShowLayout) {
-    return <>{children}</>
+    return (
+      <SessionProvider>
+        {children}
+      </SessionProvider>
+    )
   }
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
-      <main className="flex-grow">{children}</main>
-      <Footer />
-      {shouldShowFloatingContact && (
-        <FloatingContact 
-          whatsappNumber="6281234567890"
-          companyName="CV. Aprinia Geosat Solusindo"
-        />
-      )}
-    </div>
+    <SessionProvider>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-grow">{children}</main>
+        <Footer />
+        {shouldShowFloatingContact && (
+          <FloatingContact 
+            whatsappNumber="6281234567890"
+            companyName="CV. Aprinia Geosat Solusindo"
+          />
+        )}
+      </div>
+    </SessionProvider>
   )
 }

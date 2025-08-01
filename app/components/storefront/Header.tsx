@@ -3,6 +3,7 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Menu, X, ChevronDown, User, Heart, ShoppingBag, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useCart } from "@/hooks/useCart"
@@ -132,10 +133,16 @@ export default function Header() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link href="/" className="flex-shrink-0">
-              <img 
+              <Image 
                 src="/logo-aprinia-geosat.png" 
                 alt="CV. Aprinia Geosat Solusindo" 
+                width={120}
+                height={48}
                 className="h-12 w-auto object-contain"
+                priority
+                sizes="120px"
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQ4IiB2aWV3Qm94PSIwIDAgMTIwIDQ4IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cmVjdCB3aWR0aD0iMTIwIiBoZWlnaHQ9IjQ4IiBmaWxsPSIjZjNmNGY2Ii8+Cjx0ZXh0IHg9IjYwIiB5PSIyNCIgZmlsbD0iIzk0YTNiOCIgZm9udC1zaXplPSIxNCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9ImNlbnRyYWwiPkxvZ288L3RleHQ+Cjwvc3ZnPgo="
               />
             </Link>
 

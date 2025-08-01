@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -73,15 +75,27 @@ export default function OrderHistoryPage() {
   const [isTrackingOpen, setIsTrackingOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null)
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false)
+  
+  const { data: session, status } = useSession()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin")
+    }
+  }, [status, router])
 
   useEffect(() => {
     const fetchOrders = async () => {
+      if (status !== "authenticated") return
+      
       try {
-        // For demo purposes, using user_id = 1. In real app, get from auth context
-        const response = await fetch('/api/orders?user_id=1')
+        const response = await fetch('/api/orders')
         if (response.ok) {
           const data = await response.json()
           setOrders(data.data || [])
+        } else if (response.status === 401) {
+          router.push("/auth/signin")
         } else {
           console.error('Failed to fetch orders')
         }
@@ -93,7 +107,7 @@ export default function OrderHistoryPage() {
     }
 
     fetchOrders()
-  }, [])
+  }, [status, router])
 
   const getStatusIcon = (status: string) => {
     const config = statusConfig[status as keyof typeof statusConfig]
@@ -225,6 +239,30 @@ export default function OrderHistoryPage() {
     )
   }
 
+  if (status === "loading" || loading) {
+    return (
+      <div className="space-y-6">
+        {[...Array(3)].map((_, i) => (
+          <Card key={i} className="animate-pulse">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="h-5 bg-gray-300 rounded w-32 mb-2"></div>
+                  <div className="h-4 bg-gray-300 rounded w-24"></div>
+                </div>
+                <div className="h-6 bg-gray-300 rounded w-20"></div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="h-16 bg-gray-300 rounded mb-4"></div>
+              <div className="h-4 bg-gray-300 rounded w-full"></div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -232,25 +270,16 @@ export default function OrderHistoryPage() {
         <p className="text-gray-600 mt-1">Lacak dan kelola pesanan Anda</p>
       </div>
 
-      {loading ? (
-        <div className="space-y-6">
-          {[...Array(3)].map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="h-5 bg-gray-300 rounded w-32 mb-2"></div>
-                    <div className="h-4 bg-gray-300 rounded w-24"></div>
-                  </div>
-                  <div className="h-6 bg-gray-300 rounded w-20"></div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="h-16 bg-gray-300 rounded mb-4"></div>
-                <div className="h-4 bg-gray-300 rounded w-full"></div>
-              </CardContent>
-            </Card>
-          ))}
+      {orders.length === 0 ? (
+        <div className="text-center py-16 bg-gray-50 rounded-lg">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <Package className="w-8 h-8 text-gray-400" />
+          </div>
+          <h2 className="text-xl font-medium mb-2">No orders yet</h2>
+          <p className="text-gray-600 mb-6">When you place orders, they will appear here</p>
+          <Link href="/shop">
+            <Button className="bg-green-600 hover:bg-green-700">Start Shopping</Button>
+          </Link>
         </div>
       ) : (
         <div className="space-y-6">
@@ -384,19 +413,6 @@ export default function OrderHistoryPage() {
             </CardContent>
           </Card>
         ))}
-        </div>
-      )}
-
-      {!loading && orders.length === 0 && (
-        <div className="text-center py-16 bg-gray-50 rounded-lg">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
-            <Package className="w-8 h-8 text-gray-400" />
-          </div>
-          <h2 className="text-xl font-medium mb-2">No orders yet</h2>
-          <p className="text-gray-600 mb-6">When you place orders, they will appear here</p>
-          <Link href="/shop">
-            <Button className="bg-green-600 hover:bg-green-700">Start Shopping</Button>
-          </Link>
         </div>
       )}
 

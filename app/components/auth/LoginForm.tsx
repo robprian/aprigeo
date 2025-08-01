@@ -1,8 +1,9 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
+import { signIn, getSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -23,9 +24,13 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    name: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
     confirmPassword: "",
   })
+  
+  const router = useRouter()
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({
@@ -34,69 +39,251 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
     }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      const result = await signIn('credentials', {
+        email: formData.email,
+        password: formData.password,
+        redirect: false,
+      })
 
-      if (!isLogin && formData.password !== formData.confirmPassword) {
-        toast.error("Passwords don't match")
-        return
+      if (result?.error) {
+        toast.error('Invalid email or password')
+      } else {
+        toast.success('Login successful!')
+        
+        // Get session to check user role
+        const session = await getSession()
+        
+        if (onSuccess) {
+          onSuccess()
+        } else {
+          // Redirect based on user role
+          if (session?.user?.role === 'admin') {
+            router.push('/admin')
+          } else {
+            router.push('/account')
+          }
+        }
       }
-
-      // Simulate successful login/signup
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: formData.email,
-          name: formData.name || formData.email.split("@")[0],
-        }),
-      )
-
-      toast.success(isLogin ? "Welcome back!" : "Account created successfully!")
-      onSuccess?.()
     } catch (error) {
-      toast.error("Something went wrong. Please try again.")
+      console.error('Login error:', error)
+      toast.error('An error occurred during login')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleGoogleLogin = () => {
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
     setIsLoading(true)
-    // Simulate Google OAuth
-    setTimeout(() => {
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          email: "user@gmail.com",
-          name: "Google User",
+
+    try {
+      if (formData.password !== formData.confirmPassword) {
+        toast.error("Passwords don't match")
+        return
+      }
+
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
         }),
-      )
-      toast.success("Signed in with Google!")
-      onSuccess?.()
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success('Registration successful! Please login.')
+        setIsLogin(true)
+        setFormData({
+          email: formData.email, // Keep email for login
+          password: "",
+          firstName: "",
+          lastName: "",
+          phone: "",
+          confirmPassword: "",
+        })
+      } else {
+        toast.error(data.error || 'Registration failed')
+      }
+    } catch (error) {
+      console.error('Registration error:', error)
+      toast.error('An error occurred during registration')
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true)
+      await signIn('google', {
+        callbackUrl: '/account',
+      })
+    } catch (error) {
+      console.error('Google login error:', error)
+      toast.error('Google login failed')
+      setIsLoading(false)
+    }
+  }
+
+  const handleSubmit = isLogin ? handleLogin : handleRegister
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-md">
+    <div className="w-full max-w-md mx-auto space-y-6">
+      <Card>
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
             {isLogin ? "Welcome back" : "Create account"}
           </CardTitle>
           <CardDescription className="text-center">
-            {isLogin ? "Sign in to your account to continue" : "Sign up to get started with your account"}
+            {isLogin
+              ? "Enter your credentials to access your account"
+              : "Enter your information to create a new account"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Google Login Button */}
-          <Button type="button" variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
-            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="Enter your email"
+                  className="pl-10"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+            </div>
+
+            {!isLogin && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="firstName">First Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        placeholder="First name"
+                        className="pl-10"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      name="lastName"
+                      type="text"
+                      placeholder="Last name"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone (Optional)</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    placeholder="+62 812 3456 7890"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  className="pl-10 pr-10"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    className="pl-10"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+            )}
+
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+            </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+          >
+            <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -117,129 +304,39 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
             Continue with Google
           </Button>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Login/Signup Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="name"
-                    name="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="pl-10"
-                    required={!isLogin}
-                  />
-                </div>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  className="pl-10 pr-10"
-                  required
-                />
+          <div className="text-center text-sm">
+            {isLogin ? (
+              <span>
+                Don't have an account?{" "}
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="font-medium text-primary hover:underline"
+                  onClick={() => setIsLogin(false)}
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Sign up
                 </button>
-              </div>
-            </div>
-
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Confirm your password"
-                    value={formData.confirmPassword}
-                    onChange={handleInputChange}
-                    className="pl-10"
-                    required={!isLogin}
-                  />
-                </div>
-              </div>
+              </span>
+            ) : (
+              <span>
+                Already have an account?{" "}
+                <button
+                  type="button"
+                  className="font-medium text-primary hover:underline"
+                  onClick={() => setIsLogin(true)}
+                >
+                  Sign in
+                </button>
+              </span>
             )}
-
-            {isLogin && (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <input
-                    id="remember"
-                    type="checkbox"
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                  />
-                  <Label htmlFor="remember" className="text-sm">
-                    Remember me
-                  </Label>
-                </div>
-                <Link href="/forgot-password" className="text-sm text-green-600 hover:text-green-500">
-                  Forgot password?
-                </Link>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={isLoading}>
-              {isLoading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
-            </Button>
-          </form>
-
-          <div className="text-center text-sm">
-            <span className="text-gray-600">{isLogin ? "Don't have an account? " : "Already have an account? "}</span>
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-green-600 hover:text-green-500 font-medium"
-            >
-              {isLogin ? "Sign up" : "Sign in"}
-            </button>
           </div>
+
+          {isLogin && (
+            <div className="text-center">
+              <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                Forgot your password?
+              </Link>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

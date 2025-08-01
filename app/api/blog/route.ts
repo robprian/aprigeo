@@ -73,8 +73,8 @@ export async function GET(request: NextRequest) {
       author: {
         id: row.author_id,
         email: '',
-        first_name: row.first_name,
-        last_name: row.last_name,
+        first_name: row.first_name || 'Admin',
+        last_name: row.last_name || 'User',
         role: 'admin',
         is_active: true,
         created_at: '',

@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, Wand2, Edit, Trash2, Eye, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useStore } from "@/lib/store"
-import { useAdminSync } from "@/lib/admin-sync"
+import { useAdminProducts } from "@/hooks/useAdminProducts"
+import { useCategories } from "@/hooks/useCategories"
+import { useBrands } from "@/hooks/useBrands"
 import { formatCurrency } from "@/lib/currency"
 import { motion } from "framer-motion"
 import PageTransition from "@/components/ui/page-transition"
@@ -27,8 +28,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function ProductsPage() {
-  const { products, categories, brands, addProduct, updateProduct, deleteProduct, generateSEO } = useStore()
-  const { syncProduct, clearCaches } = useAdminSync()
+  const { products, isLoading, pagination } = useAdminProducts()
+  const { categories } = useCategories()
+  const { brands } = useBrands()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
@@ -54,7 +56,8 @@ export default function ProductsPage() {
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()),
+      (product.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.brand?.name || '').toLowerCase().includes(searchTerm.toLowerCase()),
   )
 
   const handleGenerateSEO = async () => {
@@ -148,12 +151,12 @@ export default function ProductsPage() {
     setFormData({
       name: product.name,
       price: product.price,
-      category: product.category,
-      stock: product.stock,
-      status: product.status,
+      category: product.category?.name || "",
+      stock: product.stock_quantity || 0,
+      status: product.is_active ? "Active" : "Inactive",
       description: product.description || "",
-      brand: product.brand || "",
-      image: product.image,
+      brand: product.brand?.name || "",
+      image: product.image || "/placeholder.svg?height=60&width=60",
       meta_title: product.meta_title || "",
       meta_description: product.meta_description || "",
       meta_tags: product.meta_tags || [],
@@ -420,7 +423,7 @@ export default function ProductsPage() {
         <Card>
           <CardHeader>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle className="text-lg sm:text-xl">Product List ({filteredProducts.length})</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Product List ({pagination?.total || filteredProducts.length})</CardTitle>
               <div className="flex flex-col sm:flex-row gap-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -439,8 +442,22 @@ export default function ProductsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            {/* Mobile view */}
-            <div className="block sm:hidden space-y-4">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
+                <span className="ml-2 text-gray-500">Loading products...</span>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No products found</p>
+                {searchTerm && (
+                  <p className="text-sm text-gray-400 mt-1">Try adjusting your search terms</p>
+                )}
+              </div>
+            ) : (
+              <>
+                {/* Mobile view */}
+                <div className="block sm:hidden space-y-4">
               {filteredProducts.map((product, index) => (
                 <motion.div
                   key={product.id}
@@ -456,22 +473,24 @@ export default function ProductsPage() {
                         alt={product.name}
                         className="w-12 h-12 rounded-lg object-cover"
                       />
-                      <div>
+                      <div className="flex items-center space-x-3">
                         <h3 className="font-medium text-sm">{product.name}</h3>
-                        <p className="text-xs text-gray-500">{product.category}</p>
-                        <p className="text-xs text-blue-600">{product.brand}</p>
+                        <p className="text-xs text-gray-500">{product.category?.name || 'No category'}</p>
+                        <p className="text-xs text-blue-600">{product.brand?.name || 'No brand'}</p>
                       </div>
                     </div>
-                    <Badge variant={product.status === "Active" ? "default" : "secondary"}>{product.status}</Badge>
+                    <Badge variant={product.is_active ? "default" : "secondary"}>
+                      {product.is_active ? "Active" : "Inactive"}
+                    </Badge>
                   </div>
 
                   <div className="flex justify-between items-center">
                     <div>
                       <p className="font-semibold">{formatCurrency(product.price)}</p>
-                      <p className="text-xs text-gray-500">Stock: {product.stock}</p>
+                      <p className="text-xs text-gray-500">Stock: {product.stock_quantity || 0}</p>
                     </div>
-                    <Badge variant={product.seo_optimized ? "default" : "outline"} className="text-xs">
-                      {product.seo_optimized ? "SEO ✓" : "SEO ✗"}
+                    <Badge variant={product.rating > 0 ? "default" : "outline"} className="text-xs">
+                      {product.rating > 0 ? "Has Reviews" : "No Reviews"}
                     </Badge>
                   </div>
 
@@ -504,7 +523,7 @@ export default function ProductsPage() {
                     <th className="text-left py-3 px-4">Price</th>
                     <th className="text-left py-3 px-4">Stock</th>
                     <th className="text-left py-3 px-4">Status</th>
-                    <th className="text-left py-3 px-4">SEO</th>
+                    <th className="text-left py-3 px-4">Reviews</th>
                     <th className="text-left py-3 px-4">Actions</th>
                   </tr>
                 </thead>
@@ -527,16 +546,18 @@ export default function ProductsPage() {
                           <span className="font-medium">{product.name}</span>
                         </div>
                       </td>
-                      <td className="py-3 px-4">{product.category}</td>
-                      <td className="py-3 px-4">{product.brand || "-"}</td>
+                      <td className="py-3 px-4">{product.category?.name || 'No category'}</td>
+                      <td className="py-3 px-4">{product.brand?.name || "-"}</td>
                       <td className="py-3 px-4">{formatCurrency(product.price)}</td>
-                      <td className="py-3 px-4">{product.stock}</td>
+                      <td className="py-3 px-4">{product.stock_quantity || 0}</td>
                       <td className="py-3 px-4">
-                        <Badge variant={product.status === "Active" ? "default" : "secondary"}>{product.status}</Badge>
+                        <Badge variant={product.is_active ? "default" : "secondary"}>
+                          {product.is_active ? "Active" : "Inactive"}
+                        </Badge>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge variant={product.seo_optimized ? "default" : "outline"}>
-                          {product.seo_optimized ? "Optimized" : "Not Optimized"}
+                        <Badge variant={product.rating > 0 ? "default" : "outline"}>
+                          {product.rating > 0 ? `${product.reviews} Reviews` : "No Reviews"}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
@@ -563,6 +584,8 @@ export default function ProductsPage() {
                 </tbody>
               </table>
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -601,8 +624,8 @@ export default function ProductsPage() {
                   />
                   <div>
                     <h3 className="text-lg font-semibold">{viewingProduct.name}</h3>
-                    <p className="text-gray-600">{viewingProduct.category}</p>
-                    <p className="text-blue-600">{viewingProduct.brand}</p>
+                    <p className="text-gray-600">{viewingProduct.category?.name || 'No category'}</p>
+                    <p className="text-blue-600">{viewingProduct.brand?.name || 'No brand'}</p>
                   </div>
                 </div>
 
@@ -613,21 +636,21 @@ export default function ProductsPage() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Stock</label>
-                    <p className="text-lg font-semibold">{viewingProduct.stock}</p>
+                    <p className="text-lg font-semibold">{viewingProduct.stock_quantity || 0}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Status</label>
                     <p>
-                      <Badge variant={viewingProduct.status === "Active" ? "default" : "secondary"}>
-                        {viewingProduct.status}
+                      <Badge variant={viewingProduct.is_active ? "default" : "secondary"}>
+                        {viewingProduct.is_active ? "Active" : "Inactive"}
                       </Badge>
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">SEO Status</label>
+                    <label className="text-sm font-medium text-gray-500">Reviews</label>
                     <p>
-                      <Badge variant={viewingProduct.seo_optimized ? "default" : "outline"}>
-                        {viewingProduct.seo_optimized ? "Optimized" : "Not Optimized"}
+                      <Badge variant={viewingProduct.rating > 0 ? "default" : "outline"}>
+                        {viewingProduct.rating > 0 ? `${viewingProduct.reviews} Reviews (${viewingProduct.rating}★)` : "No Reviews"}
                       </Badge>
                     </p>
                   </div>

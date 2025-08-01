@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       b.name,
       b.slug,
       b.description,
-      b.logo_url,
+      b.logo,
       b.is_active,
       b.created_at,
       b.updated_at
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
       name: row.name,
       slug: row.slug,
       description: row.description,
-      logo_url: row.logo_url,
+      logo_url: row.logo,
       is_active: row.is_active,
       created_at: row.created_at,
       updated_at: row.updated_at,

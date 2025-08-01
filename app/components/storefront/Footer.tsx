@@ -57,24 +57,12 @@ export default function Footer() {
     fetchSettings()
   }, [])
 
+  // Show loading state while settings are being fetched
   if (!settings) {
     return (
-      <footer className="bg-gray-900 text-white pt-12 pb-6">
-        <div className="container mx-auto px-4">
-          <div className="animate-pulse">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="space-y-3">
-                  <div className="h-6 bg-gray-700 rounded w-1/2"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-700 rounded"></div>
-                    <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="container mx-auto px-4 text-center">
+          <p>Loading...</p>
         </div>
       </footer>
     )
@@ -87,10 +75,10 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-semibold mb-4">About Us</h3>
             <p className="text-gray-400 mb-4">
-              {settings.general.company_description.value}
+              {settings?.general?.company_description?.value || 'CV. Aprinia Geosat Solusindo provides professional survey equipment, GPS tools, and mapping solutions for all your geospatial needs.'}
             </p>
             <div className="flex space-x-4">
-              {settings.social.facebook_url.value && settings.social.facebook_url.value !== '#' && (
+              {settings?.social?.facebook_url?.value && settings.social.facebook_url.value !== '#' && (
                 <a href={settings.social.facebook_url.value} className="text-gray-400 hover:text-white" target="_blank" rel="noopener noreferrer">
                   <span className="sr-only">Facebook</span>
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -102,7 +90,7 @@ export default function Footer() {
                   </svg>
                 </a>
               )}
-              {settings.social.instagram_url.value && settings.social.instagram_url.value !== '#' && (
+              {settings?.social?.instagram_url?.value && settings.social.instagram_url.value !== '#' && (
                 <a href={settings.social.instagram_url.value} className="text-gray-400 hover:text-white" target="_blank" rel="noopener noreferrer">
                   <span className="sr-only">Instagram</span>
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -114,7 +102,7 @@ export default function Footer() {
                   </svg>
                 </a>
               )}
-              {settings.social.twitter_url.value && settings.social.twitter_url.value !== '#' && (
+              {settings?.social?.twitter_url?.value && settings.social.twitter_url.value !== '#' && (
                 <a href={settings.social.twitter_url.value} className="text-gray-400 hover:text-white" target="_blank" rel="noopener noreferrer">
                   <span className="sr-only">Twitter</span>
                   <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -192,19 +180,19 @@ export default function Footer() {
             <ul className="space-y-2 text-gray-400">
               <li className="flex items-start">
                 <span className="mr-2">📍</span>
-                <span>{settings.contact.contact_address.value}</span>
+                <span>{settings?.contact?.contact_address?.value || 'Address not available'}</span>
               </li>
               <li className="flex items-center">
                 <span className="mr-2">📞</span>
-                <span>{settings.contact.contact_phone.value}</span>
+                <span>{settings?.contact?.contact_phone?.value || 'Phone not available'}</span>
               </li>
               <li className="flex items-center">
                 <span className="mr-2">📧</span>
-                <span>{settings.contact.contact_email.value}</span>
+                <span>{settings?.contact?.contact_email?.value || 'Email not available'}</span>
               </li>
               <li className="flex items-center">
                 <span className="mr-2">⏰</span>
-                <span>{settings.contact.business_hours.value}</span>
+                <span>{settings?.contact?.business_hours?.value || 'Hours not available'}</span>
               </li>
             </ul>
           </div>
@@ -212,7 +200,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-10 pt-6">
           <p className="text-center text-gray-400 text-sm">
-            &copy; {new Date().getFullYear()} {settings.general.company_name.value}. All rights reserved.
+            &copy; {new Date().getFullYear()} {settings?.general?.company_name?.value || 'CV. Aprinia Geosat Solusindo'}. All rights reserved.
           </p>
         </div>
       </div>

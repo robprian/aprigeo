@@ -79,6 +79,9 @@ export async function GET(request: NextRequest) {
       case 'name':
         orderClause = 'ORDER BY p.name ASC'
         break
+      case 'rating':
+        orderClause = `ORDER BY rating ${order}`
+        break
       case 'created_at':
       default:
         orderClause = `ORDER BY p.created_at ${order}`
@@ -105,12 +108,12 @@ export async function GET(request: NextRequest) {
         c.slug as category_slug,
         b.name as brand_name,
         b.slug as brand_slug,
-        COALESCE(AVG(pr.rating), 0) as rating,
-        COUNT(pr.id) as reviews
+        COALESCE(AVG(r.rating), 0) as rating,
+        COUNT(r.id) as reviews
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id
       LEFT JOIN brands b ON p.brand_id = b.id
-      LEFT JOIN product_reviews pr ON p.id = pr.product_id
+      LEFT JOIN reviews r ON p.id = r.product_id
       ${whereClause}
       GROUP BY p.id, c.name, c.slug, b.name, b.slug
       ${orderClause}
@@ -129,13 +132,13 @@ export async function GET(request: NextRequest) {
       short_description: row.short_description,
       sku: row.sku,
       price: parseFloat(row.price),
-      compare_price: row.compare_price ? parseFloat(row.compare_price) : undefined,
+      compare_price: row.sale_price ? parseFloat(row.sale_price) : undefined,
       cost_price: row.cost_price ? parseFloat(row.cost_price) : undefined,
       category_id: row.category_id,
       brand_id: row.brand_id,
       is_active: row.is_active,
       is_featured: row.is_featured,
-      in_stock: row.in_stock,
+      in_stock: row.is_active && row.stock_quantity > 0,
       stock_quantity: row.stock_quantity,
       weight: row.weight,
       dimensions: row.dimensions,

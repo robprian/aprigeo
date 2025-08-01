@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, Edit, Trash2, Eye, Calendar, User, Wand2, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { useStore } from "@/lib/store"
+import { useBlog } from "@/hooks/useBlog"
 import { motion } from "framer-motion"
 import PageTransition from "@/components/ui/page-transition"
 import {
@@ -24,7 +25,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function BlogPage() {
-  const { blogPosts, addBlogPost, updateBlogPost, deleteBlogPost, generateSEO } = useStore()
+  const { posts: blogPosts, isLoading } = useBlog()
+  const { addBlogPost, updateBlogPost, deleteBlogPost, generateSEO } = useStore()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)

@@ -3,26 +3,47 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Search, Filter, Eye, Truck, Package, Download } from "lucide-react"
+import { Search, Filter, Eye, Truck, Package, Download, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { useStore } from "@/lib/store"
+import { useAdminOrders } from "@/hooks/useAdminOrders"
 import { formatCurrency } from "@/lib/currency"
 import { motion } from "framer-motion"
 import PageTransition from "@/components/ui/page-transition"
 import { jsPDF } from "jspdf"
 
 export default function OrdersPage() {
-  const { orders = [] } = useStore()
+  const { orders: rawOrders, isLoading, pagination } = useAdminOrders()
+  
+  // Map database fields to component expected structure
+  const orders = rawOrders.map(order => ({
+    ...order,
+    customer: `${order.first_name} ${order.last_name}`,
+    items: parseInt(order.items_count),
+    date: new Date(order.created_at).toLocaleDateString('id-ID'),
+    total: parseFloat(order.total),
+    payment: {
+      method: 'Credit Card', // Default since not in DB yet
+      subtotal: parseFloat(order.subtotal),
+      shipping: parseFloat(order.shipping_amount),
+      tax: parseFloat(order.tax_amount),
+      total: parseFloat(order.total),
+      last4: '4242' // Mock data for invoice
+    },
+    items_detail: [], // Would need separate API call for order items
+    shipping_address: typeof order.shipping_address === 'string' 
+      ? order.shipping_address 
+      : `${order.shipping_address?.street}, ${order.shipping_address?.city}`
+  }))
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Delivered":
+    switch (status.toLowerCase()) {
+      case "delivered":
         return "default"
-      case "Shipped":
+      case "shipped":
         return "secondary"
-      case "Processing":
+      case "processing":
         return "outline"
-      case "Pending":
+      case "pending":
         return "destructive"
       default:
         return "outline"
@@ -30,17 +51,23 @@ export default function OrdersPage() {
   }
 
   const getPaymentStatusColor = (status: string) => {
-    switch (status) {
-      case "Paid":
+    switch (status.toLowerCase()) {
+      case "paid":
         return "default"
-      case "Pending":
+      case "pending":
         return "destructive"
-      case "Refunded":
+      case "refunded":
         return "secondary"
       default:
         return "outline"
     }
   }
+
+  // Calculate order statistics from real data
+  const totalOrders = orders.length
+  const shippedOrders = orders.filter(order => order.status === 'shipped').length
+  const processingOrders = orders.filter(order => order.status === 'processing').length
+  const pendingOrders = orders.filter(order => order.status === 'pending').length
 
   const generateInvoicePDF = (order: any) => {
     const doc = new jsPDF()
@@ -170,7 +197,7 @@ export default function OrdersPage() {
                   <Package className="w-8 h-8 text-blue-600 mr-3" />
                   <div>
                     <p className="text-sm text-gray-600">Total Orders</p>
-                    <p className="text-2xl font-bold">1,234</p>
+                    <p className="text-2xl font-bold">{totalOrders}</p>
                   </div>
                 </div>
               </CardContent>
@@ -184,7 +211,7 @@ export default function OrdersPage() {
                   <Truck className="w-8 h-8 text-green-600 mr-3" />
                   <div>
                     <p className="text-sm text-gray-600">Shipped</p>
-                    <p className="text-2xl font-bold">987</p>
+                    <p className="text-2xl font-bold">{shippedOrders}</p>
                   </div>
                 </div>
               </CardContent>
@@ -198,7 +225,7 @@ export default function OrdersPage() {
                   <Package className="w-8 h-8 text-orange-600 mr-3" />
                   <div>
                     <p className="text-sm text-gray-600">Processing</p>
-                    <p className="text-2xl font-bold">156</p>
+                    <p className="text-2xl font-bold">{processingOrders}</p>
                   </div>
                 </div>
               </CardContent>
@@ -212,7 +239,7 @@ export default function OrdersPage() {
                   <Package className="w-8 h-8 text-red-600 mr-3" />
                   <div>
                     <p className="text-sm text-gray-600">Pending</p>
-                    <p className="text-2xl font-bold">91</p>
+                    <p className="text-2xl font-bold">{pendingOrders}</p>
                   </div>
                 </div>
               </CardContent>
@@ -237,6 +264,13 @@ export default function OrdersPage() {
             </div>
           </CardHeader>
           <CardContent>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
+                <span className="ml-2 text-gray-500">Loading orders...</span>
+              </div>
+            ) : (
+              <>
             {/* Mobile view */}
             <div className="block md:hidden space-y-4">
               {orders.map((order, index) => (
@@ -356,6 +390,8 @@ export default function OrdersPage() {
                 </tbody>
               </table>
             </div>
+            </>
+            )}
           </CardContent>
         </Card>
       </div>

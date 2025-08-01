@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,12 +10,162 @@ import { Textarea } from "@/components/ui/textarea"
 import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { User, Lock, MapPin, Bell, CreditCard, Eye, EyeOff } from "lucide-react"
+import { toast } from "sonner"
 import { formatCurrency } from "@/lib/currency"
 
+interface UserProfile {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  phone?: string
+  profile: {
+    companyName?: string
+    taxId?: string
+    dateOfBirth?: string
+    gender?: string
+  }
+}
+
 export default function AccountSettingsPage() {
+  const { data: session } = useSession()
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+  
+  const [profileData, setProfileData] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    companyName: "",
+    taxId: "",
+    dateOfBirth: "",
+    gender: "",
+  })
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch('/api/user/profile')
+        if (response.ok) {
+          const data = await response.json()
+          setUserProfile(data.data)
+          setProfileData({
+            firstName: data.data.firstName || "",
+            lastName: data.data.lastName || "",
+            phone: data.data.phone || "",
+            companyName: data.data.profile.companyName || "",
+            taxId: data.data.profile.taxId || "",
+            dateOfBirth: data.data.profile.dateOfBirth || "",
+            gender: data.data.profile.gender || "",
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error)
+      }
+    }
+
+    if (session) {
+      fetchProfile()
+    }
+  }, [session])
+
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success('Profile updated successfully!')
+      } else {
+        toast.error(data.error || 'Failed to update profile')
+      }
+    } catch (error) {
+      console.error('Profile update error:', error)
+      toast.error('An error occurred while updating profile')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New passwords don't match")
+      return
+    }
+
+    if (passwordData.newPassword.length < 8) {
+      toast.error("New password must be at least 8 characters long")
+      return
+    }
+
+    setLoading(true)
+
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        toast.success('Password changed successfully!')
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        })
+      } else {
+        toast.error(data.error || 'Failed to change password')
+      }
+    } catch (error) {
+      console.error('Password change error:', error)
+      toast.error('An error occurred while changing password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  const handlePasswordInputChange = (field: string, value: string) => {
+    setPasswordData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
 
   return (
     <div>

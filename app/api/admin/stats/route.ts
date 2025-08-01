@@ -1,124 +1,138 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { query, getCache, setCache } from '@/lib/db'
-import { DashboardStats } from '@/lib/types'
+import { query, initializeDatabase } from '@/lib/db'
 
 export async function GET(request: NextRequest) {
   try {
-    // Handle build-time static generation
-    if (!process.env.DATABASE_URL) {
-      const mockStats: DashboardStats = {
-        total_sales: { value: 0, change: 0, trend: 'up' },
-        total_orders: { value: 0, change: 0, trend: 'up' },
-        visitors: { value: 0, change: 0, trend: 'up' },
-        total_products_sold: { value: 0, change: 0, trend: 'up' }
-      }
-      return NextResponse.json({ success: true, data: mockStats })
-    }
-
-    const cacheKey = 'admin:dashboard:stats'
+    // Initialize database connection
+    initializeDatabase()
     
-    // Try to get from cache first
-    const cached = await getCache(cacheKey)
-    if (cached) {
-      return NextResponse.json(cached)
-    }
-    
-    // Get current month and previous month dates
-    const now = new Date()
-    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0)
-    
-    // Total Sales
-    const salesQuery = `
-      SELECT 
-        COALESCE(SUM(CASE WHEN created_at >= $1 THEN total_amount ELSE 0 END), 0) as current_month_sales,
-        COALESCE(SUM(CASE WHEN created_at >= $2 AND created_at <= $3 THEN total_amount ELSE 0 END), 0) as previous_month_sales
+    // Get total revenue (sum of orders)
+    const revenueQuery = `
+      SELECT COALESCE(SUM(total), 0) as total_revenue
       FROM orders 
-      WHERE status = 'completed'
     `
-    
-    const salesResult = await query(salesQuery, [currentMonthStart, previousMonthStart, previousMonthEnd])
-    const currentSales = parseFloat(salesResult.rows[0].current_month_sales)
-    const previousSales = parseFloat(salesResult.rows[0].previous_month_sales)
-    const salesChange = previousSales > 0 ? ((currentSales - previousSales) / previousSales) * 100 : 0
-    
-    // Total Orders
-    const ordersQuery = `
-      SELECT 
-        COUNT(CASE WHEN created_at >= $1 THEN 1 END) as current_month_orders,
-        COUNT(CASE WHEN created_at >= $2 AND created_at <= $3 THEN 1 END) as previous_month_orders
+    const revenueResult = await query(revenueQuery)
+    const totalRevenue = parseFloat(revenueResult.rows[0].total_revenue)
+
+    // Get total orders count
+    const ordersCountQuery = `
+      SELECT COUNT(*) as total_orders
       FROM orders
     `
-    
-    const ordersResult = await query(ordersQuery, [currentMonthStart, previousMonthStart, previousMonthEnd])
-    const currentOrders = parseInt(ordersResult.rows[0].current_month_orders)
-    const previousOrders = parseInt(ordersResult.rows[0].previous_month_orders)
-    const ordersChange = previousOrders > 0 ? ((currentOrders - previousOrders) / previousOrders) * 100 : 0
-    
-    // Visitors (simulated data - in real app you'd track this)
-    const visitorsQuery = `
-      SELECT 
-        COUNT(CASE WHEN created_at >= $1 THEN 1 END) as current_month_visitors,
-        COUNT(CASE WHEN created_at >= $2 AND created_at <= $3 THEN 1 END) as previous_month_visitors
-      FROM users 
+    const ordersCountResult = await query(ordersCountQuery)
+    const totalOrders = parseInt(ordersCountResult.rows[0].total_orders)
+
+    // Get total products count
+    const productsCountQuery = `
+      SELECT COUNT(*) as total_products
+      FROM products
+      WHERE is_active = true
+    `
+    const productsCountResult = await query(productsCountQuery)
+    const totalProducts = parseInt(productsCountResult.rows[0].total_products)
+
+    // Get total customers count
+    const customersCountQuery = `
+      SELECT COUNT(*) as total_customers
+      FROM users
       WHERE role = 'customer'
     `
-    
-    const visitorsResult = await query(visitorsQuery, [currentMonthStart, previousMonthStart, previousMonthEnd])
-    const currentVisitors = parseInt(visitorsResult.rows[0].current_month_visitors) * 50 // Simulate visitor multiplier
-    const previousVisitors = parseInt(visitorsResult.rows[0].previous_month_visitors) * 50
-    const visitorsChange = previousVisitors > 0 ? ((currentVisitors - previousVisitors) / previousVisitors) * 100 : 0
-    
-    // Total Products Sold
-    const productsSoldQuery = `
+    const customersCountResult = await query(customersCountQuery)
+    const totalCustomers = parseInt(customersCountResult.rows[0].total_customers)
+
+    // Get recent orders
+    const recentOrdersQuery = `
       SELECT 
-        COALESCE(SUM(CASE WHEN o.created_at >= $1 THEN oi.quantity ELSE 0 END), 0) as current_month_sold,
-        COALESCE(SUM(CASE WHEN o.created_at >= $2 AND o.created_at <= $3 THEN oi.quantity ELSE 0 END), 0) as previous_month_sold
-      FROM order_items oi
-      JOIN orders o ON oi.order_id = o.id
-      WHERE o.status = 'completed'
+        o.order_number,
+        o.status,
+        o.total,
+        o.created_at,
+        u.first_name,
+        u.last_name
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      ORDER BY o.created_at DESC
+      LIMIT 5
     `
+    const recentOrdersResult = await query(recentOrdersQuery)
     
-    const productsSoldResult = await query(productsSoldQuery, [currentMonthStart, previousMonthStart, previousMonthEnd])
-    const currentProductsSold = parseInt(productsSoldResult.rows[0].current_month_sold)
-    const previousProductsSold = parseInt(productsSoldResult.rows[0].previous_month_sold)
-    const productsSoldChange = previousProductsSold > 0 ? ((currentProductsSold - previousProductsSold) / previousProductsSold) * 100 : 0
-    
-    const stats: DashboardStats = {
-      total_sales: {
-        value: currentSales,
-        change: salesChange,
-        trend: salesChange >= 0 ? 'up' : 'down'
+    // Get monthly revenue for last 6 months
+    const monthlyRevenueQuery = `
+      SELECT 
+        DATE_TRUNC('month', created_at) as month,
+        SUM(total) as revenue
+      FROM orders
+      WHERE created_at >= NOW() - INTERVAL '6 months'
+      GROUP BY DATE_TRUNC('month', created_at)
+      ORDER BY month
+    `
+    const monthlyRevenueResult = await query(monthlyRevenueQuery)
+
+    // Get order status distribution
+    const orderStatusQuery = `
+      SELECT 
+        status,
+        COUNT(*) as count
+      FROM orders
+      GROUP BY status
+    `
+    const orderStatusResult = await query(orderStatusQuery)
+
+    // Get top products by revenue
+    const topProductsQuery = `
+      SELECT 
+        p.name,
+        p.slug,
+        SUM(oi.total) as revenue,
+        SUM(oi.quantity) as quantity_sold
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      JOIN orders o ON oi.order_id = o.id
+      GROUP BY p.id, p.name, p.slug
+      ORDER BY revenue DESC
+      LIMIT 5
+    `
+    const topProductsResult = await query(topProductsQuery)
+
+    const stats = {
+      overview: {
+        totalRevenue,
+        totalOrders,
+        totalProducts,
+        totalCustomers
       },
-      total_orders: {
-        value: currentOrders,
-        change: ordersChange,
-        trend: ordersChange >= 0 ? 'up' : 'down'
-      },
-      visitors: {
-        value: currentVisitors,
-        change: visitorsChange,
-        trend: visitorsChange >= 0 ? 'up' : 'down'
-      },
-      total_products_sold: {
-        value: currentProductsSold,
-        change: productsSoldChange,
-        trend: productsSoldChange >= 0 ? 'up' : 'down'
-      }
+      recentOrders: recentOrdersResult.rows.map((row: any) => ({
+        orderNumber: row.order_number,
+        status: row.status,
+        amount: parseFloat(row.total),
+        customer: `${row.first_name} ${row.last_name}`,
+        date: row.created_at
+      })),
+      monthlyRevenue: monthlyRevenueResult.rows.map((row: any) => ({
+        month: row.month,
+        revenue: parseFloat(row.revenue)
+      })),
+      orderStatus: orderStatusResult.rows.map((row: any) => ({
+        status: row.status,
+        count: parseInt(row.count)
+      })),
+      topProducts: topProductsResult.rows.map((row: any) => ({
+        name: row.name,
+        slug: row.slug,
+        revenue: parseFloat(row.revenue),
+        quantitySold: parseInt(row.quantity_sold)
+      }))
     }
-    
-    const response = { success: true, data: stats }
-    
-    // Cache the result for 5 minutes
-    await setCache(cacheKey, response, 300)
-    
-    return NextResponse.json(response)
-    
+
+    return NextResponse.json({ 
+      success: true, 
+      data: stats 
+    })
+
   } catch (error) {
-    console.error('Dashboard stats API error:', error)
+    console.error('Error fetching dashboard stats:', error)
     return NextResponse.json(
-      { success: false, error: 'Failed to fetch dashboard stats' },
+      { error: 'Failed to fetch dashboard stats' },
       { status: 500 }
     )
   }
