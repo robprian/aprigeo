@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { useAdminOrders } from "@/hooks/useAdminOrders"
 import { formatCurrency } from "@/lib/currency"
 import { motion } from "framer-motion"
-import PageTransition from "@/components/ui/page-transition"
+// import PageTransition from "@/components/ui/page-transition"
 import { jsPDF } from "jspdf"
 
 export default function OrdersPage() {
@@ -179,14 +179,14 @@ export default function OrdersPage() {
   }
 
   return (
-    <PageTransition>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-            <p className="text-gray-600">Manage customer orders and fulfillment</p>
-          </div>
+    <div className="space-y-6"
+    >
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+          <p className="text-gray-600">Manage customer orders and fulfillment</p>
         </div>
+      </div>
 
         {/* Order Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -271,10 +271,10 @@ export default function OrdersPage() {
               </div>
             ) : (
               <>
-            {/* Mobile view */}
-            <div className="block md:hidden space-y-4">
-              {orders.map((order, index) => (
-                <motion.div
+                {/* Mobile view */}
+                <div className="block md:hidden space-y-4">
+                  {orders.map((order, index) => (
+                    <motion.div
                   key={order.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -316,12 +316,12 @@ export default function OrdersPage() {
                     </motion.div>
                   </div>
                 </motion.div>
-              ))}
-            </div>
+                  ))}
+                </div>
 
-            {/* Desktop view */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full">
+                {/* Desktop view */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-3 px-4">Order ID</th>
@@ -390,11 +390,11 @@ export default function OrdersPage() {
                 </tbody>
               </table>
             </div>
-            </>
+              </>
             )}
           </CardContent>
         </Card>
       </div>
-    </PageTransition>
+    </div>
   )
 }
