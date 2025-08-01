@@ -1,6 +1,5 @@
 import { Pool } from 'pg'
 import Redis from 'ioredis'
-import { redis as upstashRedis } from './upstash'
 
 // PostgreSQL connection - only create if DATABASE_URL is available and not during build
 let pool: Pool | null = null
@@ -11,7 +10,7 @@ export function initializeDatabase() {
   if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
     return null
   }
-  
+
   if (!pool && (process.env.DATABASE_URL || process.env.DB_HOST)) {
     try {
       pool = new Pool({
@@ -42,7 +41,7 @@ export function initializeRedis() {
   if (process.env.NODE_ENV === 'production' && !process.env.RUNTIME_PHASE) {
     return null
   }
-  
+
   if (!redis && (process.env.REDIS_URL || process.env.NODE_ENV === 'development')) {
     try {
       redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
