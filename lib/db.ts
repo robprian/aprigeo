@@ -1,5 +1,6 @@
 import { Pool } from 'pg'
 import Redis from 'ioredis'
+import { redis as upstashRedis } from './upstash'
 
 // PostgreSQL connection - only create if DATABASE_URL is available and not during build
 let pool: Pool | null = null
